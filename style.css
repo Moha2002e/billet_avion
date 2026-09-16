@@ -1,0 +1,182 @@
+html,
+body {
+    height: 100%;
+}
+
+body {
+    font-family: sans-serif;
+    font-weight: 100;
+    background: url("258756-Sepik.jpg");
+    background-size: cover;
+    height: 100vh;
+    color: white;
+}
+
+
+
+table {
+    width: 80%;
+    margin:100px auto;
+    border-collapse: collapse;
+    overflow: hidden;
+    box-shadow: 0 0 20px rgba(0,0,0,0.1);
+}
+
+th,
+td {
+    padding: 15px;
+    background-color: rgba(255,255,255,0.2);
+
+}
+
+th {
+    text-align: left;
+}
+
+thead {
+    th {
+        background-color: #55608f;
+    }
+}
+
+tbody {
+    tr {
+        &:hover {
+            background-color: rgba(255,255,255,0.3);
+        }
+    }
+    td {
+        position: relative;
+        &:hover {
+            &:before {
+                content: "";
+                position: absolute;
+                left: 0;
+                right: 0;
+                top: -9999px;
+                bottom: -9999px;
+                background-color: rgba(255,255,255,0.2);
+                z-index: -1;
+            }
+        }
+    }
+}
+
+
+.container {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+h1 {
+    text-align: center;
+    width: 100%;
+    margin-top:10px ;
+}
+
+form {
+    background-color: transparent;
+    backdrop-filter: blur(10px);
+    box-shadow: 1px 1px 10px 10px rgb(255, 255, 255);
+    border-radius:1rem ;
+    padding: 20px;
+    margin-bottom: 20px;
+    width: 29%;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    margin-left: 5px;
+}
+nav {
+    backdrop-filter: blur(10px);
+    box-shadow: 10px 10px 10px 10px white;
+    border: 1px solid;
+    margin-bottom: 25px;
+}
+nav ul  {
+    list-style-type: none;
+    display: flex;
+    justify-content: center;
+}
+nav ul li {
+    font-size: 1.2rem;
+}
+nav ul li a:hover {
+    color: white;
+    transform: translate(10px);
+}
+form label {
+    display: block;
+    margin-bottom: 10px;
+}
+
+form input[type="text"], form input[type="tel"] {
+    margin: 10px auto;
+    padding: 10px;
+    width: 20rem;
+    text-align: center;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+}
+
+form button {
+    background-color: #4CAF50;
+    color: white;
+    padding: 15px 20px;
+    margin: 10px 0;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+form button:hover {
+    background-color: #45a049;
+}
+
+a {
+    text-decoration: none;
+    margin-right: 10px;
+    color: white;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+/* Styles pour les alertes */
+.alert {
+    padding: 15px;
+    margin: 20px 0;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    width: 100%;
+    text-align: center;
+}
+
+.alert-success {
+    color: #155724;
+    background-color: #d4edda;
+    border-color: #c3e6cb;
+}
+
+.alert-danger {
+    color: #721c24;
+    background-color: #f8d7da;
+    border-color: #f5c6cb;
+}
+
+.alert-warning {
+    color: #856404;
+    background-color: #fff3cd;
+    border-color: #ffeeba;
+}
+
+.alert-info {
+    color: #0c5460;
+    background-color: #d1ecf1;
+    border-color: #bee5eb;
+}
