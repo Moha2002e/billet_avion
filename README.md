@@ -20,7 +20,7 @@ Si vous aviez lancé une version précédente, supprimez le dossier `backend/dat
 3. **Réserver** : si la personne n'est pas connectée, on lui demande de **se connecter ou de s'inscrire**, puis elle reprend exactement le vol choisi. La réservation est **créée et gardée 15 minutes** (compte à rebours) avant paiement.
 4. **Réservation** (une seule page) :
    - **Passagers** (nom, prénom, date de naissance ; le premier adulte est pré-rempli avec le compte) ; le prix dépend de l'âge le jour du vol.
-   - **Choix des sièges sur le plan de l'avion** : sièges gratuits (standard) ou payants (avant, grand espace jambes, premium). Les sièges déjà pris sont grisés ; enfants interdits près des sorties de secours ; bébés sur les genoux.
+   - **Choix des sièges** en **plan 2D** ou en **vue 3D de la cabine** (Three.js, chargé à la demande) : on avance dans l'allée (molette, flèches ↑ ↓, curseur), on regarde autour en glissant, on survole un siège pour voir sa catégorie et son prix, on clique pour le choisir, et on peut voir la cabine **depuis son siège**. Mêmes règles dans les deux vues : sièges gratuits (standard) ou payants (avant, grand espace jambes, premium). Les sièges déjà pris sont grisés ; enfants interdits près des sorties de secours ; bébés sur les genoux.
    - **Bagages** (cabine 10 kg, soute 20/32 kg), **embarquement prioritaire**, **repas**, **assurance annulation**.
    - **Récapitulatif en direct** et **paiement par carte fictif**.
 5. **Après paiement** : code de réservation à 6 caractères, **compte à rebours jusqu'au départ**, et dans « Mes voyages » :

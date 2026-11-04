@@ -23,6 +23,7 @@ import { Confirmer } from '../shared/confirmer';
 import { Countdown } from '../shared/countdown';
 import { aujourdhui, versDate, versIsoDate } from '../shared/dates';
 import { Horloge } from '../shared/horloge';
+import { Cabine3d } from '../shared/cabine-3d';
 import { PaymentForm } from '../shared/payment-form';
 import { Qr } from '../shared/qr';
 import { PassagerSiege, SeatMap } from '../shared/seat-map';
@@ -39,7 +40,7 @@ const TYPES: Record<TypePassager, string> = { ADULTE: 'Adulte', ENFANT: 'Enfant'
 /** Page d'une réservation : passagers, sièges, bagages, options, paiement ; puis gestion du voyage (modifier, enregistrement, annuler). */
 @Component({
   selector: 'app-reservation',
-  imports: [FormsModule, CurrencyPipe, DatePipe, RouterLink, Countdown, SeatMap, PaymentForm, AvionChargement, Squelette, Qr,
+  imports: [FormsModule, CurrencyPipe, DatePipe, RouterLink, Countdown, SeatMap, PaymentForm, AvionChargement, Squelette, Qr, Cabine3d,
     Button, Card, Checkbox, DatePicker, Dialog, Divider, InputText, Message, Select, SelectButton, TableModule, Tag, ToggleSwitch],
   template: `
     @if (res(); as r) {
@@ -101,7 +102,8 @@ const TYPES: Record<TypePassager, string> = { ADULTE: 'Adulte', ENFANT: 'Enfant'
             <!-- 2. Sièges -->
             <p-card header="2. Choix des sièges" subheader="Facultatif : un siège gratuit est attribué à l'enregistrement" class="mb-4">
               @if (plan(); as pl) {
-                <div class="sieges-zone">
+                <p-selectbutton [options]="vues" optionLabel="libelle" optionValue="code" [ngModel]="vue()" (ngModelChange)="vue.set($event)" [allowEmpty]="false" class="mb-3" />
+                <div class="sieges-zone" [class.sans-plan]="vue() === '3d'">
                   <div>
                     <p-selectbutton [options]="optionsSiege()" optionLabel="libelle" optionValue="id" [ngModel]="actifSiege()" (ngModelChange)="actifSiege.set($event)" [allowEmpty]="false" />
                     @if (typeActif() === 'BEBE') { <p class="muted">Un bébé voyage sur les genoux d'un adulte : pas de siège.</p> }
@@ -116,8 +118,13 @@ const TYPES: Record<TypePassager, string> = { ADULTE: 'Adulte', ENFANT: 'Enfant'
                       <li><span class="pastille pris"></span> Occupé</li>
                     </ul>
                   </div>
-                  <app-seat-map [plan]="pl" [passagers]="siegePassagers()" [actif]="actifSiege()" (choisir)="choisirSiege($event)" />
+                  @if (vue() === 'plan') {
+                    <app-seat-map [plan]="pl" [passagers]="siegePassagers()" [actif]="actifSiege()" (choisir)="choisirSiege($event)" />
+                  }
                 </div>
+                @if (vue() === '3d') {
+                  <app-cabine-3d [plan]="pl" [passagers]="siegePassagers()" [actif]="actifSiege()" (choisir)="choisirSiege($event)" (indisponible)="vue3dIndisponible()" />
+                }
               } @else { <app-squelette [nombre]="1" [hauteur]="200" /> }
             </p-card>
 
@@ -273,6 +280,10 @@ export class ReservationPage {
   protected siegePassagers = signal<PassagerSiege[]>([]);
   /** Passager dont on choisit le siège. */
   protected actifSiege = signal(0);
+  /** Présentation des sièges : plan 2D ou vue 3D de la cabine. */
+  protected vue = signal<'plan' | '3d'>('plan');
+  /** Choix de présentation des sièges. */
+  protected vues = [{ code: 'plan', libelle: 'Plan 2D' }, { code: '3d', libelle: 'Vue cabine 3D' }];
   /** Vrai pendant un paiement. */
   protected occupe = signal(false);
   protected modificationOuverte = signal(false);
@@ -396,6 +407,12 @@ export class ReservationPage {
     this.rafraichirSieges();
     const suivant = this.siegePassagers().find((p) => p.type !== 'BEBE' && !p.siege);
     if (o.siege && suivant) this.actifSiege.set(suivant.id);
+  }
+
+  /** Repasse au plan 2D quand la 3D n'est pas disponible (WebGL absent). */
+  protected vue3dIndisponible(): void {
+    this.vue.set('plan');
+    this.notifier.info("La vue 3D n'est pas disponible sur cet appareil : le plan 2D est affiché.");
   }
 
   /** Retire le siège du passager actif. */

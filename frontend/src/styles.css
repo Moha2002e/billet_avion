@@ -84,6 +84,7 @@ td.actions { display: flex; gap: 6px; flex-wrap: wrap; border-bottom: 0; }
 .champs-passager { flex: 1; display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; align-items: end; }
 .prix-p { margin-left: auto; display: flex; gap: 8px; align-items: center; }
 .sieges-zone { display: grid; grid-template-columns: minmax(200px, 1fr) auto; gap: 24px; align-items: start; }
+.sieges-zone.sans-plan { grid-template-columns: 1fr; }
 .legende { list-style: none; padding: 0; margin: 12px 0; display: flex; flex-direction: column; gap: 6px; font-size: .85rem; }
 .pastille { display: inline-block; width: 16px; height: 16px; border-radius: 4px; vertical-align: middle; margin-right: 6px; }
 .pastille.PREMIUM { background: #7c2d12; } .pastille.AVANT { background: var(--p-primary-500); } .pastille.ESPACE { background: #f5b301; }
