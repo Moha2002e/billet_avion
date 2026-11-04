@@ -1,18 +1,23 @@
 package com.billetavion.repo;
 
-import com.billetavion.model.Reservation;
-import com.billetavion.model.StatutReservation;
-import org.springframework.data.jpa.repository.JpaRepository;
+import com.billetavion.model.*;
+import org.springframework.data.jpa.repository.*;
+import org.springframework.data.repository.query.Param;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 public interface ReservationRepository extends JpaRepository<Reservation, Long> {
-    long countByVolIdAndStatut(Long volId, StatutReservation statut);
-    boolean existsByVolIdAndPassagerIdAndStatut(Long volId, Long passagerId, StatutReservation statut);
-    boolean existsByPassagerIdAndStatut(Long passagerId, StatutReservation statut);
-    boolean existsByVolIdAndStatut(Long volId, StatutReservation statut);
-    List<Reservation> findByVolIdAndStatut(Long volId, StatutReservation statut);
-    List<Reservation> findByPassagerIdOrderByDateReservationDesc(Long passagerId);
-    List<Reservation> findByGroupeIdAndStatut(Long groupeId, StatutReservation statut);
-    List<Reservation> findByStatut(StatutReservation statut);
-    List<Reservation> findAllByOrderByDateReservationDesc();
+    Optional<Reservation> findByReference(String reference);
+    boolean existsByReference(String reference);
+    boolean existsByVolId(Long volId);
+    List<Reservation> findByVolId(Long volId);
+    List<Reservation> findByUtilisateurIdOrderByCreeLeDesc(Long utilisateurId);
+    List<Reservation> findAllByOrderByCreeLeDesc();
+
+    /** Passagers qui occupent le vol : réservations confirmées ou en attente dont le délai n'est pas dépassé. */
+    @Query("select p from ReservationPassager p where p.reservation.vol.id = :volId and "
+            + "(p.reservation.statut = com.billetavion.model.StatutReservation.CONFIRMEE or "
+            + "(p.reservation.statut = com.billetavion.model.StatutReservation.EN_ATTENTE and p.reservation.expireLe > :now))")
+    List<ReservationPassager> occupants(@Param("volId") Long volId, @Param("now") LocalDateTime now);
 }

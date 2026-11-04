@@ -1,39 +1,44 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
-import { tap } from 'rxjs';
+import { firstValueFrom, tap } from 'rxjs';
+import { Api } from './api.service';
+import { AuthReponse, Utilisateur } from './models';
 
-const CLE = 'billet_admin_token';
+const CLE = 'billet_token';
 
-/** Session administrateur : le jeton est conservé dans le navigateur (localStorage). */
+/** Session : le jeton est mémorisé dans le navigateur ; le compte est rechargé au démarrage. */
 @Injectable({ providedIn: 'root' })
 export class Auth {
-  private http = inject(HttpClient);
+  private api = inject(Api);
   readonly token = signal<string | null>(this.lire());
-  readonly estAdmin = computed(() => this.token() !== null);
+  readonly utilisateur = signal<Utilisateur | null>(null);
+  readonly estConnecte = computed(() => this.utilisateur() !== null);
+  readonly estAdmin = computed(() => this.utilisateur()?.role === 'ADMIN');
 
-  private lire(): string | null {
-    try { return localStorage.getItem(CLE); } catch { return null; }
-  }
-
+  private lire(): string | null { try { return localStorage.getItem(CLE); } catch { return null; } }
   private ecrire(t: string | null) {
     this.token.set(t);
     try { t ? localStorage.setItem(CLE, t) : localStorage.removeItem(CLE); } catch { /* stockage indisponible */ }
   }
 
-  constructor() {
-    // Vérifie au démarrage qu'un jeton mémorisé est toujours valide (après construction, car l'intercepteur injecte ce service)
-    if (this.token()) setTimeout(() => this.http.get('/api/auth/me').subscribe({ error: (e) => e.status === 401 && this.ecrire(null) }));
+  /** Appelé avant le démarrage du routeur (provideAppInitializer). */
+  async restaurer() {
+    if (!this.token()) return;
+    try { this.utilisateur.set(await firstValueFrom(this.api.me())); }
+    catch { this.ecrire(null); this.utilisateur.set(null); }
   }
 
-  connecter(username: string, password: string) {
-    return this.http.post<{ token: string }>('/api/auth/login', { username, password })
-      .pipe(tap((r) => this.ecrire(r.token)));
-  }
+  private ouvrir(r: AuthReponse) { this.ecrire(r.token); this.utilisateur.set(r.utilisateur); }
+
+  connecter(identifiant: string, motDePasse: string) { return this.api.login(identifiant, motDePasse).pipe(tap((r) => this.ouvrir(r))); }
+  inscrire(d: Parameters<Api['inscription']>[0]) { return this.api.inscription(d).pipe(tap((r) => this.ouvrir(r))); }
+  majUtilisateur(u: Utilisateur) { this.utilisateur.set(u); }
 
   deconnecter() {
-    this.http.post('/api/auth/logout', {}).subscribe({ error: () => undefined });
-    this.ecrire(null);
+    if (this.token()) this.api.logout().subscribe({ error: () => undefined });
+    this.ecrire(null); this.utilisateur.set(null);
   }
 
-  expirer() { this.ecrire(null); }
+  /** Jeton refusé par le serveur (expiré) : on oublie la session. */
+  expirer() { this.ecrire(null); this.utilisateur.set(null); }
 }

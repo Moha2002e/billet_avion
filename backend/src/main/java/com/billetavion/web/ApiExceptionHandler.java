@@ -20,6 +20,11 @@ public class ApiExceptionHandler {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", e.getMessage()));
     }
 
+    @ExceptionHandler(Errors.Forbidden.class)
+    ResponseEntity<Map<String, String>> forbidden(Errors.Forbidden e) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("message", e.getMessage()));
+    }
+
     @ExceptionHandler(Errors.Business.class)
     ResponseEntity<Map<String, String>> business(Errors.Business e) {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("message", e.getMessage()));

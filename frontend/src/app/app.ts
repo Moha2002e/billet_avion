@@ -1,5 +1,5 @@
 import { Component, inject } from '@angular/core';
-import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { Notifier } from './api.service';
 import { Auth } from './auth.service';
 import { Chat } from './chat';
@@ -12,4 +12,11 @@ import { Chat } from './chat';
 export class App {
   protected notifier = inject(Notifier);
   protected auth = inject(Auth);
+  private router = inject(Router);
+
+  protected deconnecter() {
+    this.auth.deconnecter();
+    this.notifier.ok('Vous êtes déconnecté');
+    this.router.navigateByUrl('/');
+  }
 }

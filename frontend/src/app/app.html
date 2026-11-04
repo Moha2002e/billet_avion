@@ -1,15 +1,22 @@
-<h1><img src="logo.svg" alt="" width="44" height="44"> Gestion de Billets d'Avion</h1>
-<nav>
-  <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Tableau de bord</a>
-  <a routerLink="/vols" routerLinkActive="active">Vols</a>
-  <a routerLink="/promotions" routerLinkActive="active">Promotions</a>
-  <a routerLink="/passagers" routerLinkActive="active">Passagers</a>
-  <a routerLink="/reservations" routerLinkActive="active">Réservations</a>
-  <a routerLink="/groupes" routerLinkActive="active">Voyages groupés</a>
-  <a routerLink="/admin" routerLinkActive="active">{{ auth.estAdmin() ? '🔓 Admin' : '🔒 Admin' }}</a>
-</nav>
+<header class="entete-site no-print">
+  <a routerLink="/" class="marque"><img src="logo.svg" alt="" width="40" height="40"> <span>Billets d'avion</span></a>
+  <nav>
+    <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Vols</a>
+    <a routerLink="/promotions" routerLinkActive="active">Promotions</a>
+    @if (auth.estConnecte() && !auth.estAdmin()) { <a routerLink="/mes-voyages" routerLinkActive="active">Mes voyages</a> }
+    @if (auth.estAdmin()) { <a routerLink="/admin" routerLinkActive="active">Administration</a> }
+  </nav>
+  <div class="compte-menu">
+    @if (auth.utilisateur(); as u) {
+      <a routerLink="/compte" class="utilisateur">👤 {{ u.prenom || u.nom }}</a>
+      <button class="small sec" (click)="deconnecter()">Se déconnecter</button>
+    } @else {
+      <a routerLink="/connexion" class="bouton">Se connecter</a>
+    }
+  </div>
+</header>
 @if (notifier.message(); as m) {
-  <div class="alert alert-{{ m.type }}">{{ m.text }}</div>
+  <div class="alert alert-{{ m.type }} no-print">{{ m.text }}</div>
 }
 <main><router-outlet /></main>
-<app-chat />
+<app-chat class="no-print" />

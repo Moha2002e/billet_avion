@@ -15,4 +15,8 @@ public final class Errors {
     public static class Unauthorized extends RuntimeException {
         public Unauthorized(String message) { super(message); }
     }
+
+    public static class Forbidden extends RuntimeException {
+        public Forbidden(String message) { super(message); }
+    }
 }
