@@ -120,7 +120,7 @@ td.actions { display: flex; gap: 6px; flex-wrap: wrap; border-bottom: 0; }
 .embarquement { display: grid; grid-template-columns: 2fr 1fr; background: #fff; border: 2px solid var(--orange); border-radius: 12px; overflow: hidden; margin: 12px 0; }
 .embarquement .gauche { padding: 14px; display: flex; flex-direction: column; gap: 4px; }
 .embarquement .villes { font-size: 1.3rem; font-weight: 700; color: var(--orange-fonce); }
-.embarquement .droite { padding: 14px; background: var(--orange-clair); display: flex; flex-direction: column; gap: 4px; border-left: 2px dashed var(--orange); }
+.embarquement .droite { padding: 14px; background: var(--orange-clair); display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; border-left: 2px dashed var(--orange); }
 .barcode { height: 40px; margin: 6px 0; background: repeating-linear-gradient(90deg, #222 0 2px, transparent 2px 4px, #222 4px 5px, transparent 5px 8px, #222 8px 11px, transparent 11px 13px); }
 
 @media (max-width: 900px) {
@@ -129,7 +129,15 @@ td.actions { display: flex; gap: 6px; flex-wrap: wrap; border-bottom: 0; }
   .panneau-passagers { right: 0; left: 0; width: auto; }
 }
 @media print {
-  .no-print, .card:not(:has(.embarquement)), .entete { display: none !important; }
+  @page { margin: 12mm; }
+  *, *::before, *::after { animation: none !important; transition: none !important; opacity: 1 !important; }
+  body { background: #fff; }
+  main { padding: 0; max-width: none; }
+  .no-print, .card:not(:has(.embarquement)), .entete, .entete-site, .alert, .barre-chargement { display: none !important; }
+  .deux { display: block; }
+  .card { border: 0; box-shadow: none; padding: 0; animation: none; }
+  .card h2 { margin-bottom: 8px; }
+  .embarquement { break-inside: avoid; border-color: #000; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
 
 /* ================= Animations et chargement ================= */

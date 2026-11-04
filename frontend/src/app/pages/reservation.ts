@@ -10,6 +10,7 @@ import { Countdown } from '../shared/countdown';
 import { Horloge } from '../shared/horloge';
 import { PassagerSiege, SeatMap } from '../shared/seat-map';
 import { PaymentForm } from '../shared/payment-form';
+import { Qr } from '../shared/qr';
 import { AvionChargement, Squelette } from '../shared/spinner';
 
 interface FormPassager { id: number; type: TypePassager; nom: string; prenom: string; dateNaissance: string; categorie: Categorie; prixBillet: number; }
@@ -20,7 +21,7 @@ const TYPES: Record<TypePassager, string> = { ADULTE: 'Adulte', ENFANT: 'Enfant'
 /** Page d'une réservation : passagers, sièges, bagages, options, paiement ; puis gestion du voyage (modifier, enregistrement, annuler). */
 @Component({
   selector: 'app-reservation',
-  imports: [FormsModule, CurrencyPipe, DatePipe, RouterLink, Countdown, SeatMap, PaymentForm, AvionChargement, Squelette],
+  imports: [FormsModule, CurrencyPipe, DatePipe, RouterLink, Countdown, SeatMap, PaymentForm, AvionChargement, Squelette, Qr],
   template: `
     @if (res(); as r) {
       <div class="card entete">
@@ -174,26 +175,28 @@ const TYPES: Record<TypePassager, string> = { ADULTE: 'Adulte', ENFANT: 'Enfant'
               </section>
             }
 
-            @if (enregistre(r)) {
+            @if (r.statut === 'CONFIRMEE') {
               <section class="card">
-                <h2>🎫 Cartes d'embarquement</h2>
+                <h2>{{ titreBillets(r) }}</h2>
+                @if (!enregistre(r)) { <p class="muted">Billet électronique : présentez ce QR code à l'aéroport. Faites l'enregistrement en ligne pour obtenir votre carte d'embarquement avec la porte.</p> }
                 @for (p of r.passagers; track p.id) {
                   <div class="embarquement">
                     <div class="gauche">
-                      <small>{{ r.vol.compagnie }} · vol {{ r.vol.numeroVol }}</small>
+                      <small>{{ r.vol.compagnie }} · vol {{ r.vol.numeroVol }} · {{ typeDocument(r) }}</small>
                       <div class="villes">{{ r.vol.origine }} → {{ r.vol.destination }}</div>
-                      <div><b>{{ p.prenom }} {{ p.nom }}</b></div>
-                      <small>{{ r.vol.dateDepart | date: 'EEE d MMM y' }} · Embarquement {{ r.heureEmbarquement | date: 'HH:mm' }} · Départ {{ r.vol.dateDepart | date: 'HH:mm' }}</small>
+                      <div><b>{{ (p.nom ?? '').toUpperCase() }} {{ p.prenom }}</b></div>
+                      <small>{{ r.vol.dateDepart | date: 'EEE d MMM y' }} · Départ {{ r.vol.dateDepart | date: 'HH:mm' }} → Arrivée {{ r.vol.dateArrivee | date: 'HH:mm' }}</small>
+                      @if (enregistre(r)) { <small>Embarquement {{ r.heureEmbarquement | date: 'HH:mm' }} · Porte {{ r.porte }}</small> }
+                      <small>Bagage : {{ libelleBagage(p.bagage) }}@if (p.prioritaire) { · Embarquement prioritaire }</small>
                     </div>
                     <div class="droite">
-                      <div>Porte <b>{{ r.porte }}</b></div>
-                      <div>Siège <b>{{ p.siege ?? 'Sur genoux' }}</b></div>
-                      <div class="barcode" aria-hidden="true"></div>
-                      <small>{{ r.reference }}</small>
+                      <app-qr [valeur]="contenuQr(r, p)" [taille]="110" />
+                      <div>Siège <b>{{ libelleSiege(p) }}</b></div>
+                      <small>Réf. <b>{{ r.reference }}</b></small>
                     </div>
                   </div>
                 }
-                <button class="sec no-print" (click)="imprimer()">🖨 Imprimer</button>
+                <button class="no-print" (click)="imprimer()">🖨 Imprimer {{ enregistre(r) ? "mes cartes d'embarquement" : "mes billets" }}</button>
               </section>
             }
           </div>
@@ -418,6 +421,17 @@ export class ReservationPage {
   }
 
   protected imprimer() { window.print(); }
+
+  protected titreBillets(r: Reservation) { return this.enregistre(r) ? "🎫 Cartes d'embarquement" : '🎫 Mes billets'; }
+  protected typeDocument(r: Reservation) { return this.enregistre(r) ? "CARTE D'EMBARQUEMENT" : 'BILLET ÉLECTRONIQUE'; }
+  protected libelleSiege(p: { type: TypePassager; siege: string | null }) { return p.type === 'BEBE' ? 'Sur genoux' : (p.siege ?? "À l'enregistrement"); }
+
+  protected libelleBagage(b: Bagage) { return this.catalogue()?.bagages.find((x) => x.code === b)?.libelle ?? b; }
+
+  /** Contenu du QR code : référence, passager, vol, date et siège (ce que lirait un portique). */
+  protected contenuQr(r: Reservation, p: { id: number; nom: string | null; prenom: string | null; siege: string | null }) {
+    return ['BA1', r.reference, r.vol.numeroVol, r.vol.dateDepart.slice(0, 16), `${(p.nom ?? '').toUpperCase()}/${p.prenom ?? ''}`, p.siege ?? '-', p.id].join('|');
+  }
 
   protected retourParams(r: Reservation) {
     const nb = (t: TypePassager) => r.passagers.filter((p) => p.type === t).length;
