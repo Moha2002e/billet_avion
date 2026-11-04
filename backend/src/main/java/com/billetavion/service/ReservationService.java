@@ -12,6 +12,9 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 
+/**
+ * Cœur du métier : création, passagers, options, paiement fictif, modification de vol, enregistrement et annulation.
+ */
 @Service
 @Transactional
 public class ReservationService {
@@ -33,17 +36,34 @@ public class ReservationService {
         this.dispo = dispo; this.cartes = cartes; this.mapper = mapper;
     }
 
+    /**
+     * Calcule le montant réellement payé (paiements moins remboursements).
+     *
+     * @param r la réservation
+     * @return le total payé
+     */
     public static BigDecimal paye(Reservation r) {
         return r.getPaiements().stream().map(Paiement::getMontant).reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
     // ---------------------------------------------------------------- lecture
 
+    /**
+     * Passe la réservation à « expirée » si le délai de paiement est dépassé.
+     *
+     * @param r la réservation
+     */
     private void rafraichir(Reservation r) {
         if (r.getStatut() == StatutReservation.EN_ATTENTE && r.getExpireLe() != null && r.getExpireLe().isBefore(LocalDateTime.now()))
             r.setStatut(StatutReservation.EXPIREE);
     }
 
+    /**
+     * Charge une réservation et met à jour son statut si elle a expiré.
+     *
+     * @param id l'identifiant
+     * @return la réservation
+     */
     private Reservation charger(Long id) {
         Reservation r = repo.findById(id).orElseThrow(() -> new Errors.NotFound("Réservation introuvable"));
         rafraichir(r);
@@ -57,12 +77,32 @@ public class ReservationService {
         return r;
     }
 
+    /**
+     * Renvoie une réservation du client (404 si elle appartient à un autre compte).
+     *
+     * @param utilisateurId l'identifiant du client connecté
+     * @param id l'identifiant
+     * @return la réservation
+     */
     public ReservationDto obtenir(Long utilisateurId, Long id) { return dto(chargerProprietaire(utilisateurId, id)); }
 
+    /**
+     * Liste les réservations du client connecté.
+     *
+     * @param utilisateurId l'identifiant du client connecté
+     * @return ses réservations
+     */
     public List<ReservationDto> mesReservations(Long utilisateurId) {
         return repo.findByUtilisateurIdOrderByCreeLeDesc(utilisateurId).stream().peek(this::rafraichir).map(this::dto).toList();
     }
 
+    /**
+     * Liste toutes les réservations (administrateur), filtrables par statut et par texte (référence ou e-mail).
+     *
+     * @param statut le statut voulu, ou null
+     * @param q le texte recherché, ou null
+     * @return les réservations trouvées
+     */
     public List<ReservationDto> toutes(StatutReservation statut, String q) {
         String f = q == null ? "" : q.trim().toLowerCase();
         return repo.findAllByOrderByCreeLeDesc().stream().peek(this::rafraichir)
@@ -74,6 +114,13 @@ public class ReservationService {
 
     // ---------------------------------------------------------------- création
 
+    /**
+     * Crée une réservation gardée 15 minutes : contrôle le vol, les places et la promotion, crée les passagers et calcule les prix.
+     *
+     * @param utilisateurId l'identifiant du client connecté
+     * @param req le vol, le nombre de passagers par type et le code promo
+     * @return la réservation créée (en attente de paiement)
+     */
     public ReservationDto creer(Long utilisateurId, ReservationCreate req) {
         int n = req.adultes() + req.enfants() + req.bebes();
         if (req.adultes() < 1) throw new Errors.Business("Au moins un adulte est requis");
@@ -103,6 +150,13 @@ public class ReservationService {
         return dto(repo.save(r));
     }
 
+    /**
+     * Ajoute des passagers vides d'un type à la réservation.
+     *
+     * @param r la réservation
+     * @param type le type de passager
+     * @param nb le nombre à ajouter
+     */
     private void ajouter(Reservation r, TypePassager type, int nb) {
         for (int i = 0; i < nb; i++) {
             ReservationPassager p = new ReservationPassager();
@@ -111,6 +165,11 @@ public class ReservationService {
         }
     }
 
+    /**
+     * Génère une référence unique de 6 caractères.
+     *
+     * @return la référence
+     */
     private String nouvelleReference() {
         String ref;
         do {
@@ -121,11 +180,23 @@ public class ReservationService {
         return ref;
     }
 
+    /**
+     * Vérifie que le vol est programmé et pas encore parti.
+     *
+     * @param vol le vol
+     */
     private void verifierReservable(Vol vol) {
         if (vol.getStatut() != StatutVol.PROGRAMME) throw new Errors.Business("Ce vol est annulé");
         if (!vol.getDateDepart().isAfter(LocalDateTime.now())) throw new Errors.Business("Ce vol est déjà parti");
     }
 
+    /**
+     * Vérifie qu'une catégorie d'âge correspond au type de passager (adulte, enfant, bébé).
+     *
+     * @param t le type de passager
+     * @param c la catégorie d'âge
+     * @return vrai si compatible
+     */
     private static boolean typeCompatible(TypePassager t, Categorie c) {
         return switch (t) {
             case ADULTE -> c == Categorie.JEUNE || c == Categorie.ADULTE || c == Categorie.SENIOR;
@@ -144,6 +215,13 @@ public class ReservationService {
         }
     }
 
+    /**
+     * Cherche la meilleure remise ; un code invalide est ignoré sans erreur.
+     *
+     * @param vol le vol
+     * @param code le code
+     * @return la remise retenue
+     */
     private PromotionService.Remise promoSansErreur(Vol vol, String code) {
         try { return promotions.remisePour(vol, code); }
         catch (Errors.Business e) { return promotions.remisePour(vol, null); }
@@ -151,6 +229,14 @@ public class ReservationService {
 
     // ---------------------------------------------------------------- passagers & options
 
+    /**
+     * Met à jour nom, prénom et date de naissance des passagers, contrôle l'âge et recalcule les prix.
+     *
+     * @param utilisateurId l'identifiant du client connecté
+     * @param id l'identifiant
+     * @param req les passagers saisis
+     * @return la réservation mise à jour
+     */
     public ReservationDto majPassagers(Long utilisateurId, Long id, PassagersRequest req) {
         Reservation r = chargerProprietaire(utilisateurId, id);
         verifierModifiable(r);
@@ -171,6 +257,14 @@ public class ReservationService {
         return dto(r);
     }
 
+    /**
+     * Met à jour sièges, bagages, options et assurance après contrôle (siège libre, pas de sortie de secours pour un enfant, rien pour un bébé).
+     *
+     * @param utilisateurId l'identifiant du client connecté
+     * @param id l'identifiant
+     * @param req les choix par passager
+     * @return la réservation mise à jour
+     */
     public ReservationDto majOptions(Long utilisateurId, Long id, OptionsRequest req) {
         Reservation r = chargerProprietaire(utilisateurId, id);
         verifierModifiable(r);
@@ -196,6 +290,14 @@ public class ReservationService {
         return dto(r);
     }
 
+    /**
+     * Vérifie qu'un siège existe et est libre.
+     *
+     * @param vol le vol
+     * @param code le siège (ex. 12A)
+     * @param pris les sièges déjà pris
+     * @return la catégorie du siège (donc son prix)
+     */
     private ClasseSiege verifierSiege(Vol vol, String code, Set<String> pris) {
         if (!code.matches("\\d{1,2}[A-F]")) throw new Errors.Business("Siège invalide : " + code);
         int rang = Integer.parseInt(code.substring(0, code.length() - 1));
@@ -206,11 +308,23 @@ public class ReservationService {
         return ClasseSiege.duRang(rang);
     }
 
+    /**
+     * Retrouve un passager de la réservation.
+     *
+     * @param r la réservation
+     * @param id l'identifiant
+     * @return le passager
+     */
     private ReservationPassager passager(Reservation r, Long id) {
         return r.getPassagers().stream().filter(p -> p.getId().equals(id)).findFirst()
                 .orElseThrow(() -> new Errors.NotFound("Passager introuvable dans cette réservation"));
     }
 
+    /**
+     * Vérifie que la réservation peut encore être modifiée (ni expirée, ni annulée, vol à venir).
+     *
+     * @param r la réservation
+     */
     private void verifierModifiable(Reservation r) {
         if (r.getStatut() == StatutReservation.EXPIREE) throw new Errors.Business("Le délai de paiement est dépassé : refaites une recherche");
         if (r.getStatut() == StatutReservation.ANNULEE) throw new Errors.Business("Cette réservation est annulée");
@@ -220,6 +334,14 @@ public class ReservationService {
 
     // ---------------------------------------------------------------- paiement fictif
 
+    /**
+     * Paie le solde (paiement fictif) : valide la carte, enregistre le paiement et confirme la réservation.
+     *
+     * @param utilisateurId l'identifiant du client connecté
+     * @param id l'identifiant
+     * @param req la carte saisie ou la carte enregistrée
+     * @return la réservation confirmée
+     */
     public ReservationDto payer(Long utilisateurId, Long id, PaiementRequest req) {
         Reservation r = chargerProprietaire(utilisateurId, id);
         verifierModifiable(r);
@@ -255,12 +377,34 @@ public class ReservationService {
 
     // ---------------------------------------------------------------- modification du vol (+10 %)
 
+    /**
+     * Calcule le coût d'un changement de vol sans l'appliquer.
+     *
+     * @param utilisateurId l'identifiant du client connecté
+     * @param id l'identifiant
+     * @param nouveauVolId l'identifiant du nouveau vol
+     * @return le détail : différence de prix, frais de 10 % et total à payer
+     */
     public ApercuModification apercuModification(Long utilisateurId, Long id, Long nouveauVolId) {
         return calculerApercu(chargerProprietaire(utilisateurId, id), nouveauVolId).apercu();
     }
 
+    /**
+     * Résultat d'un calcul de modification : aperçu, nouveau vol et remise applicable.
+     *
+     * @param apercu la valeur « apercu »
+     * @param vol le vol
+     * @param remise la valeur « remise »
+     */
     private record Calcul(ApercuModification apercu, Vol vol, PromotionService.Remise remise) {}
 
+    /**
+     * Calcule le coût d'un changement de vol : frais de 10 % du prix des billets + différence si le nouveau vol est plus cher.
+     *
+     * @param r la réservation
+     * @param nouveauVolId l'identifiant du nouveau vol
+     * @return le calcul complet
+     */
     private Calcul calculerApercu(Reservation r, Long nouveauVolId) {
         if (r.getStatut() != StatutReservation.CONFIRMEE) throw new Errors.Business("Seule une réservation payée peut être modifiée");
         verifierModifiable(r);
@@ -282,6 +426,14 @@ public class ReservationService {
                 Catalogue.FRAIS_MODIFICATION_POURCENT, frais.add(difference)), nv, remise);
     }
 
+    /**
+     * Change le vol d'une réservation payée : encaisse frais et différence, garde les sièges encore libres.
+     *
+     * @param utilisateurId l'identifiant du client connecté
+     * @param id l'identifiant
+     * @param req le nouveau vol et la carte
+     * @return la réservation modifiée
+     */
     public ReservationDto modifierVol(Long utilisateurId, Long id, ModificationRequest req) {
         Reservation r = chargerProprietaire(utilisateurId, id);
         Calcul c = calculerApercu(r, req.nouveauVolId());
@@ -307,12 +459,25 @@ public class ReservationService {
 
     // ---------------------------------------------------------------- enregistrement en ligne
 
+    /**
+     * Indique si l'enregistrement en ligne est ouvert (de 48 h à 1 h avant le départ).
+     *
+     * @param r la réservation
+     * @return vrai si ouvert
+     */
     private boolean enregistrementOuvert(Reservation r) {
         if (r.getStatut() != StatutReservation.CONFIRMEE) return false;
         LocalDateTime d = r.getVol().getDateDepart(), now = LocalDateTime.now();
         return now.isAfter(d.minusHours(Catalogue.ENREGISTREMENT_OUVERT_HEURES)) && now.isBefore(d.minusHours(Catalogue.ENREGISTREMENT_FERME_HEURES));
     }
 
+    /**
+     * Enregistre en ligne : attribue un siège gratuit aux passagers qui n'en ont pas et les marque enregistrés.
+     *
+     * @param utilisateurId l'identifiant du client connecté
+     * @param id l'identifiant
+     * @return la réservation avec cartes d'embarquement
+     */
     public ReservationDto enregistrement(Long utilisateurId, Long id) {
         Reservation r = chargerProprietaire(utilisateurId, id);
         if (!enregistrementOuvert(r))
@@ -333,6 +498,14 @@ public class ReservationService {
         return dto(r);
     }
 
+    /**
+     * Cherche le premier siège libre (standard d'abord).
+     *
+     * @param vol le vol
+     * @param pris les sièges déjà pris
+     * @param type le type de passager
+     * @return le code du siège, ou null s'il n'y en a plus
+     */
     private String premierSiegeLibre(Vol vol, Set<String> pris, TypePassager type) {
         for (ClasseSiege voulue : List.of(ClasseSiege.STANDARD, ClasseSiege.AVANT, ClasseSiege.PREMIUM, ClasseSiege.ESPACE)) {
             if (voulue == ClasseSiege.ESPACE && type == TypePassager.ENFANT) continue;
@@ -350,6 +523,12 @@ public class ReservationService {
 
     // ---------------------------------------------------------------- DTO
 
+    /**
+     * Calcule les totaux : billets, sièges, bagages, options, assurance, frais, total, payé et solde.
+     *
+     * @param r la réservation
+     * @return les totaux
+     */
     TotauxDto totaux(Reservation r) {
         BigDecimal billets = somme(r, ReservationPassager::getPrixBillet);
         BigDecimal sieges = somme(r, ReservationPassager::getSiegePrix);
@@ -366,10 +545,23 @@ public class ReservationService {
         return new TotauxDto(billets, sieges, bagages, options, assurance, frais, total, paye, solde);
     }
 
+    /**
+     * Additionne une valeur sur tous les passagers.
+     *
+     * @param r la réservation
+     * @param f la fonction qui extrait la valeur à additionner
+     * @return la somme
+     */
     private BigDecimal somme(Reservation r, java.util.function.Function<ReservationPassager, BigDecimal> f) {
         return r.getPassagers().stream().map(f).reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
+    /**
+     * Convertit une réservation en objet de réponse complet.
+     *
+     * @param r la réservation
+     * @return la réservation à envoyer au front
+     */
     ReservationDto dto(Reservation r) {
         List<PassagerDto> passagers = r.getPassagers().stream().map(p -> new PassagerDto(p.getId(), p.getType(), p.getNom(),
                 p.getPrenom(), p.getDateNaissance(), p.getCategorie(), p.getPrixBillet(), p.getSiege(), p.getSiegePrix(),

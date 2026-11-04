@@ -6,6 +6,9 @@ import java.math.RoundingMode;
 
 /** Règles de prix : coefficient par catégorie d'âge, puis remise de groupe. */
 public final class Tarif {
+    /**
+     * Classe utilitaire : ne s'instancie pas.
+     */
     private Tarif() {}
 
     /** Remise (en %) selon le nombre de passagers du groupe. */
@@ -16,6 +19,14 @@ public final class Tarif {
         return 0;
     }
 
+    /**
+     * Calcule un prix sans promotion : prix du vol × coefficient d'âge × remise de groupe.
+     *
+     * @param prixVol le prix d'un billet adulte
+     * @param categorie la catégorie d'âge
+     * @param remiseGroupePourcent la remise de groupe en pourcentage
+     * @return le prix arrondi au centime
+     */
     public static BigDecimal prix(BigDecimal prixVol, Categorie categorie, int remiseGroupePourcent) {
         return prix(prixVol, categorie, remiseGroupePourcent, 0);
     }

@@ -10,6 +10,9 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Gestion des promotions : création, validité, choix de la meilleure remise pour une réservation.
+ */
 @Service
 @Transactional
 public class PromotionService {
@@ -21,14 +24,32 @@ public class PromotionService {
     private final PromotionRepository promotions;
     private final VolRepository vols;
 
+    /**
+     * Construit le service.
+     *
+     * @param promotions le dépôt ou service des promotions
+     * @param vols le dépôt des vols
+     */
     public PromotionService(PromotionRepository promotions, VolRepository vols) {
         this.promotions = promotions; this.vols = vols;
     }
 
+    /**
+     * Charge une promotion.
+     *
+     * @param id l'identifiant
+     * @return la promotion
+     */
     private Promotion trouver(Long id) {
         return promotions.findById(id).orElseThrow(() -> new Errors.NotFound("Promotion introuvable : " + id));
     }
 
+    /**
+     * Convertit une promotion en objet de réponse.
+     *
+     * @param p la promotion
+     * @return la promotion à envoyer au front
+     */
     public PromotionDto dto(Promotion p) {
         Vol v = p.getVol();
         return new PromotionDto(p.getId(), p.getCode(), p.getDescription(), p.getPourcentage(), p.getDateDebut(),
@@ -44,11 +65,22 @@ public class PromotionService {
                 .sorted(Comparator.comparingInt(Promotion::getPourcentage).reversed()).map(this::dto).toList();
     }
 
+    /**
+     * Liste toutes les promotions, y compris expirées ou désactivées (administrateur).
+     *
+     * @return toutes les promotions
+     */
     @Transactional(readOnly = true)
     public List<PromotionDto> toutes() {
         return promotions.findAll().stream().map(this::dto).toList();
     }
 
+    /**
+     * Crée une promotion (le code doit être unique).
+     *
+     * @param r les informations de la promotion
+     * @return la promotion créée
+     */
     public PromotionDto creer(PromotionRequest r) {
         if (promotions.findByCodeIgnoreCase(r.code()).isPresent()) throw new Errors.Business("Ce code promo existe déjà");
         Promotion p = new Promotion();
@@ -56,6 +88,13 @@ public class PromotionService {
         return dto(promotions.save(p));
     }
 
+    /**
+     * Modifie une promotion.
+     *
+     * @param id l'identifiant
+     * @param r les nouvelles informations
+     * @return la promotion modifiée
+     */
     public PromotionDto modifier(Long id, PromotionRequest r) {
         Promotion p = trouver(id);
         promotions.findByCodeIgnoreCase(r.code()).filter(x -> !x.getId().equals(id))
@@ -64,6 +103,11 @@ public class PromotionService {
         return dto(p);
     }
 
+    /**
+     * Supprime une promotion.
+     *
+     * @param id l'identifiant
+     */
     public void supprimer(Long id) { promotions.delete(trouver(id)); }
 
     /** Promotion « meilleure offre » automatique pour un vol (affichée sur les vols). */
@@ -98,6 +142,13 @@ public class PromotionService {
         return meilleure;
     }
 
+    /**
+     * Vérifie qu'un code est valide aujourd'hui pour ce vol.
+     *
+     * @param code le code saisi
+     * @param vol le vol
+     * @return la promotion correspondante
+     */
     private Promotion codeValide(String code, Vol vol) {
         Optional<Promotion> p = promotions.findByCodeIgnoreCase(code == null ? "" : code.trim());
         if (p.isEmpty() || !p.get().enCours(LocalDate.now()) || !p.get().concerne(vol))
@@ -105,6 +156,12 @@ public class PromotionService {
         return p.get();
     }
 
+    /**
+     * Copie les informations de la requête dans la promotion après contrôle des dates.
+     *
+     * @param p la promotion à remplir
+     * @param r les informations reçues
+     */
     private void appliquer(Promotion p, PromotionRequest r) {
         if (r.dateFin().isBefore(r.dateDebut())) throw new Errors.Business("La date de fin doit être après la date de début");
         p.setCode(r.code().trim().toUpperCase());

@@ -10,6 +10,9 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 
+/**
+ * Gestion des vols : recherche, ajout, modification, annulation, plan de cabine et manifeste.
+ */
 @Service
 @Transactional
 public class VolService {
@@ -18,10 +21,24 @@ public class VolService {
     private final Mapper mapper;
     private final DisponibiliteService dispo;
 
+    /**
+     * Construit le service.
+     *
+     * @param vols le dépôt des vols
+     * @param reservations le dépôt des réservations
+     * @param mapper le convertisseur en objets de réponse
+     * @param dispo le service de disponibilité
+     */
     public VolService(VolRepository vols, ReservationRepository reservations, Mapper mapper, DisponibiliteService dispo) {
         this.vols = vols; this.reservations = reservations; this.mapper = mapper; this.dispo = dispo;
     }
 
+    /**
+     * Charge un vol.
+     *
+     * @param id l'identifiant
+     * @return le vol
+     */
     public Vol trouver(Long id) {
         return vols.findById(id).orElseThrow(() -> new Errors.NotFound("Vol introuvable : " + id));
     }
@@ -53,6 +70,16 @@ public class VolService {
                 .map(v -> new ResultatVolDto(v, estimer(v, adultes, enfants, bebes, remiseGroupe))).toList();
     }
 
+    /**
+     * Estime le prix total pour tous les passagers (âge, groupe, promotion).
+     *
+     * @param v le vol
+     * @param adultes le nombre d'adultes
+     * @param enfants le nombre d'enfants
+     * @param bebes le nombre de bébés
+     * @param remiseGroupe la remise de groupe en pourcentage
+     * @return le prix total estimé
+     */
     private static BigDecimal estimer(VolDto v, int adultes, int enfants, int bebes, int remiseGroupe) {
         int promo = v.promoPourcent();
         return Tarif.prix(v.prix(), Categorie.ADULTE, remiseGroupe, promo).multiply(BigDecimal.valueOf(adultes))
@@ -68,15 +95,34 @@ public class VolService {
         return new ArrayList<>(s);
     }
 
+    /**
+     * Renvoie un vol.
+     *
+     * @param id l'identifiant
+     * @return le vol
+     */
     @Transactional(readOnly = true)
     public VolDto obtenir(Long id) { return mapper.vol(trouver(id)); }
 
+    /**
+     * Ajoute un vol (administrateur).
+     *
+     * @param r les informations du vol
+     * @return le vol créé
+     */
     public VolDto creer(VolRequest r) {
         Vol v = new Vol();
         appliquer(v, r);
         return mapper.vol(vols.save(v));
     }
 
+    /**
+     * Modifie un vol sans passer sous le nombre de places déjà occupées.
+     *
+     * @param id l'identifiant
+     * @param r les nouvelles informations
+     * @return le vol modifié
+     */
     public VolDto modifier(Long id, VolRequest r) {
         Vol v = trouver(id);
         long occupees = v.getCapacite() - dispo.placesRestantes(v);
@@ -86,6 +132,11 @@ public class VolService {
         return mapper.vol(v);
     }
 
+    /**
+     * Supprime un vol qui n'a aucune réservation.
+     *
+     * @param id l'identifiant
+     */
     public void supprimer(Long id) {
         Vol v = trouver(id);
         if (reservations.existsByVolId(id))
@@ -108,6 +159,13 @@ public class VolService {
         return mapper.vol(v);
     }
 
+    /**
+     * Liste les passagers confirmés d'un vol, filtrables par catégorie d'âge (ex. les jeunes).
+     *
+     * @param id l'identifiant
+     * @param categorie la catégorie voulue, ou null
+     * @return les passagers du vol
+     */
     @Transactional(readOnly = true)
     public List<ManifesteDto> manifeste(Long id, Categorie categorie) {
         Vol v = trouver(id);
@@ -140,6 +198,12 @@ public class VolService {
         return new PlanDto(id, rangees, plan);
     }
 
+    /**
+     * Copie les informations de la requête dans le vol après contrôle (dates, villes différentes).
+     *
+     * @param v le vol à remplir
+     * @param r les informations reçues
+     */
     private void appliquer(Vol v, VolRequest r) {
         if (!r.dateArrivee().isAfter(r.dateDepart()))
             throw new Errors.Business("La date d'arrivée doit être après la date de départ");
@@ -151,6 +215,13 @@ public class VolService {
         v.setCapacite(r.capacite()); v.setPrix(r.prix());
     }
 
+    /**
+     * Teste si une valeur contient un filtre, sans tenir compte de la casse.
+     *
+     * @param valeur la valeur testée
+     * @param filtre le filtre saisi
+     * @return vrai si le filtre est vide ou contenu dans la valeur
+     */
     private static boolean contient(String valeur, String filtre) {
         return filtre == null || filtre.isBlank() || valeur.toLowerCase().contains(filtre.trim().toLowerCase());
     }

@@ -12,8 +12,21 @@ import java.time.YearMonth;
  */
 @Service
 public class CarteService {
+    /**
+     * Carte bancaire validée : marque et 4 derniers chiffres uniquement.
+     *
+     * @param marque la valeur « marque »
+     * @param fin la valeur « fin »
+     */
     public record Carte(String marque, String fin) {}
 
+    /**
+     * Valide une carte bancaire fictive (Luhn, date, CVV) et « débite » : aucun paiement réel. Seuls la marque et les 4 derniers chiffres sont conservés.
+     *
+     * @param u le client payeur (pour sa carte enregistrée)
+     * @param p la carte saisie ou la demande de carte enregistrée
+     * @return la marque et les 4 derniers chiffres
+     */
     public Carte debiter(Utilisateur u, PaiementRequest p) {
         if (p.carteEnregistree()) {
             if (u.getCarteFin() == null) throw new Errors.Business("Aucune carte enregistrée sur ce compte");
@@ -36,12 +49,24 @@ public class CarteService {
         return new Carte(marque, fin);
     }
 
+    /**
+     * Lit une date d'expiration « MM/AA ».
+     *
+     * @param s le texte saisi
+     * @return le mois d'expiration
+     */
     private static YearMonth expiration(String s) {
         if (s == null || !s.trim().matches("(0[1-9]|1[0-2])/(\\d{2})")) throw new Errors.Business("Date d'expiration invalide (MM/AA)");
         String[] m = s.trim().split("/");
         return YearMonth.of(2000 + Integer.parseInt(m[1]), Integer.parseInt(m[0]));
     }
 
+    /**
+     * Vérifie la somme de contrôle de Luhn d'un numéro de carte.
+     *
+     * @param n le numéro de carte (chiffres seuls)
+     * @return vrai si le numéro est valide
+     */
     static boolean luhn(String n) {
         int somme = 0; boolean double_ = false;
         for (int i = n.length() - 1; i >= 0; i--) {

@@ -19,15 +19,36 @@ public class AdminInterceptor implements HandlerInterceptor {
     public static final String ATTR_UTILISATEUR = "utilisateurId";
     private final AuthService auth;
 
+    /**
+     * Construit l'intercepteur.
+     *
+     * @param auth le service d'authentification
+     */
     public AdminInterceptor(AuthService auth) { this.auth = auth; }
 
+    /**
+     * Extrait le jeton de l'en-tête « Authorization: Bearer … ».
+     *
+     * @param req la requête HTTP (porte l'identifiant du client connecté)
+     * @return le jeton, ou null
+     */
     public static String jeton(HttpServletRequest req) {
         String h = req.getHeader("Authorization");
         return h != null && h.startsWith("Bearer ") ? h.substring(7).trim() : null;
     }
 
+    /**
+     * Niveau d'accès requis par une route : public, compte connecté ou administrateur.
+     */
     enum Acces { PUBLIC, CONNECTE, ADMIN }
 
+    /**
+     * Détermine le niveau d'accès d'une route : public, compte connecté ou administrateur.
+     *
+     * @param methode la méthode HTTP
+     * @param chemin le chemin demandé
+     * @return le niveau requis
+     */
     static Acces requis(String methode, String chemin) {
         boolean ecriture = !methode.equals("GET") && !methode.equals("HEAD") && !methode.equals("OPTIONS");
         if (chemin.startsWith("/api/admin") || (ecriture && (chemin.startsWith("/api/vols") || chemin.startsWith("/api/promotions"))))
@@ -37,6 +58,14 @@ public class AdminInterceptor implements HandlerInterceptor {
         return Acces.PUBLIC;
     }
 
+    /**
+     * Contrôle l'accès avant chaque requête : 401 sans connexion, 403 pour un client sur une route admin.
+     *
+     * @param req la requête HTTP (porte l'identifiant du client connecté)
+     * @param res la réponse HTTP
+     * @param handler le gestionnaire de la requête
+     * @return vrai si la requête peut continuer
+     */
     @Override
     public boolean preHandle(HttpServletRequest req, HttpServletResponse res, Object handler) throws Exception {
         Optional<AuthService.Session> s = auth.session(jeton(req));
@@ -48,6 +77,14 @@ public class AdminInterceptor implements HandlerInterceptor {
         return true;
     }
 
+    /**
+     * Répond par une erreur JSON et bloque la requête.
+     *
+     * @param res la réponse HTTP
+     * @param code le code HTTP
+     * @param message le message d'erreur
+     * @return toujours false
+     */
     private boolean refuser(HttpServletResponse res, int code, String message) throws Exception {
         res.setStatus(code);
         res.setContentType("application/json;charset=UTF-8");

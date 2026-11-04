@@ -1,7 +1,7 @@
 # ✈ Billets d'avion
 
 Site de réservation de vols inspiré des compagnies aériennes (Ryanair, Royal Air Maroc…).
-Back-end **Spring Boot 3.5** (Java 21, JPA, H2) + front **Angular 22**.
+Back-end **Spring Boot 3.5** (Java 21, JPA, H2) + front **Angular 21** avec **PrimeNG 21** (thème Aura orange, composants PrimeNG partout : menu, tableaux, formulaires, calendriers, boîtes de dialogue, notifications, graphique…).
 
 ## Lancer
 ```bash
@@ -11,7 +11,7 @@ cd backend && mvn spring-boot:run
 # 2. Front-end (http://localhost:4200, proxy /api -> :8080)
 cd frontend && npm install && npm start
 ```
-Tests du back-end : `cd backend && mvn test` (10 tests d'intégration).
+Tests du back-end : `cd backend && mvn test` (11 tests d'intégration).
 Si vous aviez lancé une version précédente, supprimez le dossier `backend/data` (le modèle de données a changé).
 
 ## Parcours client
@@ -37,6 +37,11 @@ Si vous aviez lancé une version précédente, supprimez le dossier `backend/dat
 - **Promotions** (par l'admin) : automatiques ou sur code, sur un vol ou tous ; non cumulables entre elles (la meilleure est retenue), cumulables avec l'âge et le groupe.
 - Sièges : premium +35 €, avant +15 €, grand espace +20 €, standard gratuit. Tous les tarifs sont dans `Catalogue.java`, `Bagage.java`, `ClasseSiege.java`.
 
+## Données de démonstration (bouton admin)
+Dans **Administration → Tableau de bord**, le bouton **« Insérer les données de démonstration »** ajoute en un clic : 24 vols (12 liaisons aller-retour), 5 promotions, 3 clients de démonstration et 3 réservations (dont un groupe de 6 et un voyage payé avec assurance).
+**Aucun doublon** : chaque donnée est identifiée par une clé (numéro de vol, code promo, e-mail) et ignorée si elle existe déjà ; on peut cliquer autant de fois qu'on veut. Un bilan s'affiche (ajouté / déjà présent).
+Comptes de démonstration (mot de passe `demo12345`) : `sara.benali@demo.be`, `karim.janssens@demo.be`, `lea.dubois@demo.be`.
+
 ## Administration
 Connexion avec le compte administrateur (menu « Se connecter »). Identifiants par défaut `admin` / `admin123` : **à changer** via les variables d'environnement `ADMIN_USERNAME` et `ADMIN_PASSWORD`.
 Tableau de bord, **ajout/modification/annulation/suppression de vols**, promotions, liste de toutes les réservations (recherche par référence ou e-mail, annulation avec remboursement), passagers d'un vol filtrables par catégorie d'âge (ex. « jeunes »).
@@ -47,6 +52,12 @@ Bulle de chat en bas à droite (`POST /api/chat`), sans IA externe ni clé d'API
 ## Paiement fictif
 Aucune banque n'est contactée. Le format de la carte est validé (Luhn, date, CVV) ; seuls la marque et les 4 derniers chiffres sont conservés, jamais le numéro complet ni le CVV.
 Carte de test acceptée : `4242 4242 4242 4242` · refusée : `4000 0000 0000 0002`.
+
+## Documentation du code
+Chaque classe, méthode, constructeur et accesseur est documenté : **Javadoc** en français côté Java (`@param`, `@return`), **JSDoc** côté TypeScript. Les règles de prix et d'accès sont décrites dans les classes `Tarif`, `Catalogue`, `AdminInterceptor` et `ReservationService`.
+
+## Pourquoi PrimeNG 21 et pas 22 ?
+PrimeNG 22 exige une clé de licence PrimeUI (gratuite sous conditions, mais à demander) et affiche un bandeau « Invalid PrimeUI License » sans elle. PrimeNG 21 est sous licence MIT, sans clé : le projet utilise donc Angular 21 + PrimeNG 21.
 
 ## Sécurité
 Mots de passe hachés (BCrypt), jeton de session de 8 h, contrôle d'accès côté serveur (public / connecté / admin), une réservation n'est visible que par son propriétaire. Les jetons sont gardés en mémoire du serveur : redémarrer le back-end déconnecte tout le monde.

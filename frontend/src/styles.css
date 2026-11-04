@@ -1,187 +1,128 @@
-/* Identité visuelle : orange et blanc */
-:root {
-  --orange: #e07f3c;
-  --orange-fonce: #c4662a;
-  --orange-clair: #fdf2e8;
-  --orange-bord: #efd5bf;
-  --texte: #1f2937;
-  --gris: #6b7280;
-  --blanc: #ffffff;
-  --rouge: #c0392b;
-  --vert: #1e8e4e;
-}
+/* Mise en page de l'application. L'apparence des composants (boutons, champs, tableaux, cartes…) vient de PrimeNG
+   (thème Aura, orange doux, défini dans src/app/shared/theme.ts) ; ici seulement la disposition. */
 * { box-sizing: border-box; }
-body { margin: 0; font-family: system-ui, sans-serif; color: var(--texte); background: var(--blanc); min-height: 100vh; }
-h2 { margin: 0 0 12px; } h3 { margin: 8px 0; }
-a { color: var(--orange-fonce); }
+body { margin: 0; font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; color: var(--p-text-color); background: #fff; min-height: 100vh; }
 main { max-width: 1200px; margin: 0 auto; padding: 16px; }
-small { opacity: .85; } .muted { color: var(--gris); }
+h1, h2, h3 { margin: 0 0 12px; }
+a { color: var(--p-primary-600); }
+small { opacity: .85; }
+.muted { color: var(--p-text-muted-color); }
+.alerte { color: var(--p-red-600); font-weight: 600; }
+.rembourse { color: var(--p-green-600); }
 s { text-decoration: line-through; }
+.mb-3 { margin-bottom: 1rem; } .mb-4 { margin-bottom: 1.5rem; } .mt-2 { margin-top: .5rem; } .mt-3 { margin-top: 1rem; } .mt-4 { margin-top: 1.5rem; }
+.centre { text-align: center; }
+.carte-etroite { display: block; max-width: 560px; margin: 24px auto; }
 
-/* ---- en-tête du site ---- */
-.entete-site { display: flex; align-items: center; flex-wrap: wrap; gap: 12px 24px; padding: 10px 24px; background: var(--orange); color: #fff; }
-.marque { display: flex; align-items: center; gap: 10px; color: #fff; text-decoration: none; font-weight: 700; font-size: 1.25rem; }
-.entete-site nav { display: flex; gap: 6px; flex: 1; flex-wrap: wrap; }
-.entete-site nav a { color: #fff; text-decoration: none; padding: 8px 14px; border-radius: 6px; }
-.entete-site nav a:hover, .entete-site nav a.active { background: rgba(255,255,255,.25); }
-.compte-menu { display: flex; align-items: center; gap: 10px; }
-.utilisateur { color: #fff; text-decoration: none; }
-.entete-site .bouton { background: #fff; color: var(--orange-fonce); font-weight: 600; }
-.entete-site .bouton:hover { background: var(--orange-clair); }
-.entete-site button.sec { background: rgba(255,255,255,.22); color: #fff; border-color: rgba(255,255,255,.5); } .entete-site button.sec:hover { background: rgba(255,255,255,.35); }
+/* ---- barre de menu orange ---- */
+.entete-site.p-menubar {
+  --p-menubar-background: var(--p-primary-500); --p-menubar-border-color: transparent; --p-menubar-color: #fff;
+  --p-menubar-border-radius: 0; --p-menubar-item-color: #fff; --p-menubar-item-icon-color: #fff; --p-menubar-item-focus-color: #fff;
+  --p-menubar-item-focus-background: rgba(255,255,255,.22); --p-menubar-item-active-color: #fff; --p-menubar-item-active-background: rgba(255,255,255,.3);
+  --p-menubar-item-icon-focus-color: #fff; --p-menubar-item-icon-active-color: #fff; --p-menubar-mobile-button-color: #fff;
+  padding: .4rem 1.5rem; gap: 1rem;
+}
+.marque { display: flex; align-items: center; gap: 10px; color: #fff; text-decoration: none; font-weight: 700; font-size: 1.25rem; margin-right: 1rem; }
+.barre-chargement { position: fixed; top: 0; left: 0; right: 0; z-index: 2000; --p-progressbar-height: 3px; }
+.barre-chargement .p-progressbar { height: 3px; }
 
-/* ---- éléments communs ---- */
-.card { background: var(--blanc); border: 1px solid var(--orange-bord); border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(224,127,60,.07); }
-.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; }
-.stat { text-align: center; background: var(--orange-clair); border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 4px; align-items: center; }
-.stat b { display: block; font-size: 1.6rem; color: var(--orange-fonce); }
-a.stat { color: var(--texte); text-decoration: none; } a.stat:hover { background: var(--orange-bord); }
-label { display: flex; flex-direction: column; font-size: .85rem; gap: 4px; color: var(--texte); }
-label.case { flex-direction: row; align-items: center; gap: 8px; font-size: .9rem; }
-input, select { padding: 9px 10px; border-radius: 6px; border: 1px solid #cfd4da; min-width: 140px; font: inherit; background: #fff; color: var(--texte); }
-input:focus, select:focus { outline: 2px solid var(--orange); border-color: var(--orange); }
-input[type=checkbox], input[type=radio] { min-width: 0; width: auto; accent-color: var(--orange); }
-input:disabled { background: #f1f3f5; color: #6b7280; }
-button, .bouton { background: var(--orange); color: #fff; border: 0; border-radius: 6px; padding: 10px 16px; cursor: pointer; font: inherit; text-decoration: none; display: inline-block; }
-button:hover, .bouton:hover { background: var(--orange-fonce); }
-button:disabled { opacity: .45; cursor: not-allowed; }
-button.sec, .bouton.sec { background: var(--orange-clair); color: var(--orange-fonce); border: 1px solid var(--orange-bord); }
-button.sec:hover, .bouton.sec:hover { background: var(--orange-bord); }
-button.danger { background: var(--rouge); color: #fff; } button.danger:hover { background: #a93226; }
-button.small { padding: 5px 10px; font-size: .8rem; }
-form.row, .filters { display: flex; flex-wrap: wrap; gap: 10px; align-items: end; }
-.colonne { display: flex; flex-direction: column; gap: 12px; }
-table { width: 100%; border-collapse: collapse; margin: 10px 0; }
-th, td { padding: 9px 10px; text-align: left; border-bottom: 1px solid var(--orange-bord); }
-th { background: var(--orange-clair); color: var(--orange-fonce); }
+/* ---- formulaires ---- */
+.champ { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.champ label, label.etiquette { font-size: .85rem; font-weight: 600; }
+.champ .p-inputwrapper, .champ .p-autocomplete, .champ .p-datepicker, .champ .p-inputnumber, .champ .p-select, .champ .p-password, .champ .p-inputmask, .champ input { width: 100%; }
+.colonne { display: flex; flex-direction: column; gap: 14px; }
+.deux-champs { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.ligne-choix { display: flex; align-items: center; gap: 8px; }
+.formulaire-ligne { display: flex; flex-wrap: wrap; gap: 14px; align-items: end; }
+.formulaire-ligne .champ { width: 210px; }
+.filtres { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 12px; }
+.entete-page { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 14px; align-items: center; margin-bottom: 14px; }
 td.actions { display: flex; gap: 6px; flex-wrap: wrap; border-bottom: 0; }
-.badge { padding: 2px 8px; border-radius: 10px; font-size: .75rem; background: var(--orange-clair); color: var(--orange-fonce); border: 1px solid var(--orange-bord); white-space: nowrap; }
-.badge.CONFIRMEE, .badge.ADULTE { background: #e6f6ec; color: var(--vert); border-color: #b7e2c5; }
-.badge.ANNULE, .badge.ANNULEE, .badge.EXPIREE { background: #fbe9e7; color: var(--rouge); border-color: #f1c2bb; }
-.badge.EN_ATTENTE, .badge.ENFANT { background: #fff4d6; color: #9a6700; border-color: #f2dd9b; }
-.badge.BEBE { background: #fde7f1; color: #b0206b; border-color: #f4bfd9; }
-.badge.JEUNE { background: #e5f0ff; color: #1d5fbf; border-color: #b9d3f6; }
-.badge.SENIOR { background: #efe8fb; color: #6b3fb5; border-color: #d5c6f0; }
-.alert { max-width: 1100px; margin: 12px auto; padding: 12px; border-radius: 6px; text-align: center; }
-.alert-success { color: #155724; background: #d4edda; } .alert-danger { color: #721c24; background: #f8d7da; } .alert-info { color: #7a3500; background: var(--orange-clair); border: 1px solid var(--orange-bord); }
-.alerte { color: var(--rouge); font-weight: 600; }
-.rembourse { color: var(--vert); }
-
-.onglets { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
-.onglets button, .onglets a { background: var(--orange-clair); color: var(--orange-fonce); padding: 8px 14px; border-radius: 8px; text-decoration: none; border: 1px solid var(--orange-bord); cursor: pointer; font: inherit; }
-.onglets .actif { background: var(--orange); color: #fff; border-color: var(--orange); }
 
 /* ---- accueil et recherche ---- */
-.hero { text-align: center; padding: 34px 16px 40px; background: var(--orange); color: #fff; border-radius: 14px; margin-bottom: 20px; }
-.hero h2 { font-size: 2rem; }
+.hero { text-align: center; padding: 34px 16px 40px; background: var(--p-primary-500); color: #fff; border-radius: 14px; margin-bottom: 24px; }
+.hero h1 { font-size: 2rem; }
 .hero p { opacity: .95; margin-bottom: 22px; }
-.recherche { position: relative; display: flex; flex-wrap: wrap; gap: 10px; align-items: end; justify-content: center; background: #fff; padding: 18px; border-radius: 12px; text-align: left; color: var(--texte); box-shadow: 0 4px 14px rgba(0,0,0,.15); }
-.recherche .echange { padding: 9px 12px; }
-.recherche .rechercher { font-weight: 700; padding: 11px 22px; }
-.recherche .passagers { min-width: 150px; text-align: left; }
-.card .recherche { box-shadow: none; border: 1px solid var(--orange-bord); }
-.panneau-passagers { position: absolute; top: 100%; right: 160px; z-index: 5; width: 300px; background: #fff; border: 1px solid var(--orange-bord); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 10px 30px rgba(0,0,0,.2); }
-.panneau-passagers .ligne { display: flex; justify-content: space-between; align-items: center; }
-.panneau-passagers .pas { display: flex; align-items: center; gap: 10px; }
-.dest { min-height: 110px; justify-content: center; }
-.avantages .stat b { font-size: 2rem; }
+.recherche { position: relative; display: flex; flex-wrap: wrap; gap: 12px; align-items: end; justify-content: center; background: #fff; padding: 18px; border-radius: 12px; text-align: left; color: var(--p-text-color); box-shadow: 0 4px 14px rgba(0,0,0,.15); }
+.recherche .champ { min-width: 190px; }
+.p-card .recherche { box-shadow: none; padding: 0; }
+.panneau-passagers { display: flex; flex-direction: column; gap: 14px; width: 300px; }
+.panneau-passagers .ligne { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.panneau-passagers .compteur { width: 3.2rem; text-align: center; }
+.avion-deco { display: inline-block; animation: vole-deco 4s ease-in-out infinite; }
+.grille { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; }
+.tuile { display: flex; flex-direction: column; gap: 6px; align-items: center; text-align: center; background: var(--p-primary-50); border-radius: 10px; padding: 16px; }
+.tuile i { font-size: 1.8rem; color: var(--p-primary-600); }
+.tuile.lien { color: var(--p-text-color); text-decoration: none; transition: transform .15s, box-shadow .15s; }
+.tuile.lien:hover { transform: translateY(-3px); box-shadow: 0 6px 14px rgba(224,127,60,.25); }
+.tuile .ville { font-size: 1.4rem; color: var(--p-primary-600); }
+.tuile-stat .p-card-body { align-items: center; text-align: center; }
+.tuile-stat .p-card-content { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.tuile-stat i { font-size: 1.6rem; color: var(--p-primary-500); }
+.tuile-stat b { font-size: 1.6rem; color: var(--p-primary-700); }
+.graphique { height: 320px; }
 
-.vol { display: grid; grid-template-columns: 2fr 2fr 1.4fr; gap: 14px; align-items: center; padding: 14px; background: #fff; border: 1px solid var(--orange-bord); border-radius: 12px; margin-bottom: 12px; }
-.vol:hover { box-shadow: 0 4px 14px rgba(224,127,60,.18); }
+.vol-grille { display: grid; grid-template-columns: 2fr 2fr 1.4fr; gap: 14px; align-items: center; }
 .horaires { display: flex; align-items: center; gap: 14px; }
 .horaires div b { display: block; font-size: 1.4rem; } .horaires small { display: block; }
-.horaires .trait { flex: 1; text-align: center; } .horaires hr { border: 0; border-top: 2px solid var(--orange); margin: 4px 0; }
-.infos { display: flex; flex-direction: column; gap: 4px; }
-.prix { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
-.prix b { font-size: 1.5rem; color: var(--orange-fonce); }
+.horaires .trait { flex: 1; text-align: center; } .horaires hr { border: 0; border-top: 2px solid var(--p-primary-500); margin: 4px 0; }
+.infos { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
+.prix { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+.prix b { font-size: 1.5rem; color: var(--p-primary-700); }
 
 /* ---- réservation ---- */
-.entete { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 14px; align-items: center; }
 .trajet { font-size: 1.3rem; font-weight: 600; margin: 6px 0; }
-.compte-box { text-align: right; background: var(--orange-clair); padding: 10px 16px; border-radius: 10px; }
-.compte-box div { font-size: 1.1rem; color: var(--orange-fonce); }
-.deux { display: grid; grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr); gap: 20px; align-items: start; }
-.recap { position: sticky; top: 12px; border-color: var(--orange); }
-.lignes td { border: 0; padding: 5px 0; } .lignes td:last-child { text-align: right; }
-.lignes .total td { border-top: 1px solid var(--orange-bord); font-weight: 700; font-size: 1.05rem; padding-top: 8px; }
-.passager { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; padding: 10px 0; border-bottom: 1px solid var(--orange-bord); }
-.passager .num { width: 28px; height: 28px; border-radius: 50%; background: var(--orange); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; flex: none; }
-.passager .filters { flex: 1; } .prix-p { margin-left: auto; }
+.compte-box { text-align: right; background: var(--p-primary-50); padding: 10px 16px; border-radius: 10px; }
+.compte-box div { font-size: 1.1rem; color: var(--p-primary-700); }
+.deux { display: grid; grid-template-columns: minmax(0, 2fr) minmax(300px, 1fr); gap: 20px; align-items: start; }
+.recap { position: sticky; top: 12px; border: 1px solid var(--p-primary-300); }
+.lignes { width: 100%; border-collapse: collapse; }
+.lignes td { padding: 5px 0; } .lignes td:last-child { text-align: right; }
+.lignes .total td { border-top: 1px solid var(--p-primary-200); font-weight: 700; font-size: 1.05rem; padding-top: 8px; }
+.passager { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; padding: 12px 0; border-bottom: 1px solid var(--p-content-border-color); }
+.passager .num { width: 28px; height: 28px; border-radius: 50%; background: var(--p-primary-500); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; flex: none; }
+.champs-passager { flex: 1; display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; align-items: end; }
+.prix-p { margin-left: auto; display: flex; gap: 8px; align-items: center; }
 .sieges-zone { display: grid; grid-template-columns: minmax(200px, 1fr) auto; gap: 24px; align-items: start; }
 .legende { list-style: none; padding: 0; margin: 12px 0; display: flex; flex-direction: column; gap: 6px; font-size: .85rem; }
 .pastille { display: inline-block; width: 16px; height: 16px; border-radius: 4px; vertical-align: middle; margin-right: 6px; }
-.pastille.PREMIUM { background: #7c2d12; } .pastille.AVANT { background: var(--orange); } .pastille.ESPACE { background: #f5b301; }
+.pastille.PREMIUM { background: #7c2d12; } .pastille.AVANT { background: var(--p-primary-500); } .pastille.ESPACE { background: #f5b301; }
 .pastille.STANDARD { background: #cfd4da; } .pastille.choisi { background: #1f2937; } .pastille.pris { background: #f1f3f5; border: 1px solid #cfd4da; }
-.assurance { margin-top: 14px; padding: 12px; background: var(--orange-clair); border-radius: 10px; align-items: flex-start; }
+.assurance { display: flex; gap: 12px; align-items: flex-start; margin-top: 14px; padding: 12px; background: var(--p-primary-50); border-radius: 10px; }
 .actions-voyage { display: flex; flex-wrap: wrap; gap: 10px; }
 .voyage { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 14px; align-items: center; }
 .voyage .droite { text-align: right; display: flex; flex-direction: column; gap: 6px; align-items: flex-end; }
 
-.embarquement { display: grid; grid-template-columns: 2fr 1fr; background: #fff; border: 2px solid var(--orange); border-radius: 12px; overflow: hidden; margin: 12px 0; }
+.embarquement { display: grid; grid-template-columns: 2fr 1fr; background: #fff; border: 2px solid var(--p-primary-500); border-radius: 12px; overflow: hidden; margin: 12px 0; }
 .embarquement .gauche { padding: 14px; display: flex; flex-direction: column; gap: 4px; }
-.embarquement .villes { font-size: 1.3rem; font-weight: 700; color: var(--orange-fonce); }
-.embarquement .droite { padding: 14px; background: var(--orange-clair); display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; border-left: 2px dashed var(--orange); }
-.barcode { height: 40px; margin: 6px 0; background: repeating-linear-gradient(90deg, #222 0 2px, transparent 2px 4px, #222 4px 5px, transparent 5px 8px, #222 8px 11px, transparent 11px 13px); }
+.embarquement .villes { font-size: 1.3rem; font-weight: 700; color: var(--p-primary-700); }
+.embarquement .droite { padding: 14px; background: var(--p-primary-50); display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; border-left: 2px dashed var(--p-primary-500); }
+
+/* ---- chargement ---- */
+.avion-chargement { text-align: center; padding: 10px 0 18px; color: var(--p-text-muted-color); }
+.avion-chargement .piste { position: relative; height: 38px; margin-bottom: 4px; border-bottom: 2px dashed var(--p-primary-200); overflow: hidden; }
+.avion-vole { position: absolute; bottom: 2px; font-size: 1.5rem; color: var(--p-primary-500); animation: vole 2.2s ease-in-out infinite; }
+
+/* ---- animations ---- */
+@keyframes apparition { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@keyframes vole { 0% { left: -8%; transform: translateY(0) rotate(0); } 50% { transform: translateY(-8px) rotate(-6deg); } 100% { left: 100%; transform: translateY(0) rotate(0); } }
+@keyframes vole-deco { 0%, 100% { transform: translate(0, 0) rotate(-4deg); } 50% { transform: translate(10px, -6px) rotate(4deg); } }
+main > *:not(router-outlet) { animation: apparition .35s ease-out; }
+.apparition { animation: apparition .4s ease-out both; }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; } }
 
 @media (max-width: 900px) {
-  .deux, .sieges-zone, .vol { grid-template-columns: 1fr; }
+  .deux, .sieges-zone, .vol-grille, .deux-champs { grid-template-columns: 1fr; }
   .recap { position: static; } .prix { align-items: flex-start; }
-  .panneau-passagers { right: 0; left: 0; width: auto; }
 }
 @media print {
   @page { margin: 12mm; }
   *, *::before, *::after { animation: none !important; transition: none !important; opacity: 1 !important; }
   body { background: #fff; }
   main { padding: 0; max-width: none; }
-  .no-print, .card:not(:has(.embarquement)), .entete, .entete-site, .alert, .barre-chargement { display: none !important; }
+  .no-print, .entete-site, .barre-chargement, .p-toast, app-chat { display: none !important; }
+  main > app-reservation > p-card:not(.billets), .deux > p-card, .deux > div > p-card:not(.billets), p-dialog, .entete-page { display: none !important; }
   .deux { display: block; }
-  .card { border: 0; box-shadow: none; padding: 0; animation: none; }
-  .card h2 { margin-bottom: 8px; }
+  .p-card { box-shadow: none !important; border: 0 !important; }
   .embarquement { break-inside: avoid; border-color: #000; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-}
-
-/* ================= Animations et chargement ================= */
-@keyframes apparition { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
-@keyframes tourne { to { transform: rotate(360deg); } }
-@keyframes brille { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
-@keyframes barre { 0% { left: -40%; } 100% { left: 100%; } }
-@keyframes vole { 0% { left: -8%; transform: translateY(0) rotate(0); } 50% { transform: translateY(-8px) rotate(-6deg); } 100% { left: 100%; transform: translateY(0) rotate(0); } }
-@keyframes clignote { 0%, 100% { opacity: 1; } 50% { opacity: .55; } }
-@keyframes glisse { from { opacity: 0; transform: translateY(-12px); } to { opacity: 1; transform: none; } }
-
-/* Les pages apparaissent en douceur à chaque changement de route */
-main > *:not(router-outlet) { animation: apparition .35s ease-out; }
-.card { animation: apparition .35s ease-out both; }
-.alert { animation: glisse .3s ease-out; }
-
-/* Barre de progression en haut quand le serveur travaille */
-.barre-chargement { position: fixed; top: 0; left: 0; right: 0; height: 3px; z-index: 50; overflow: hidden; background: rgba(224,127,60,.2); }
-.barre-chargement::after { content: ''; position: absolute; top: 0; bottom: 0; width: 40%; background: #fff; box-shadow: 0 0 8px #c4662a; animation: barre 1s ease-in-out infinite; }
-
-/* Icône de chargement */
-.spinner { display: inline-block; width: 1em; height: 1em; border: .17em solid currentColor; border-right-color: transparent; border-radius: 50%; vertical-align: -0.15em; animation: tourne .7s linear infinite; }
-
-/* Squelettes */
-.squelette { border-radius: 12px; margin-bottom: 12px; background: linear-gradient(90deg, #f6ebe1 25%, #fdf7f1 50%, #f6ebe1 75%); background-size: 200% 100%; animation: brille 1.4s linear infinite; }
-
-/* Avion qui traverse pendant la recherche */
-.avion-chargement { text-align: center; padding: 10px 0 18px; color: var(--gris); }
-.avion-chargement .piste { position: relative; height: 38px; margin-bottom: 4px; border-bottom: 2px dashed var(--orange-bord); overflow: hidden; }
-.avion-vole { position: absolute; bottom: 2px; font-size: 1.7rem; color: var(--orange); animation: vole 2.2s ease-in-out infinite; }
-
-/* Interactions */
-button, .bouton, a.stat, .vol, .siege { transition: transform .15s ease, box-shadow .15s ease, background-color .15s ease; }
-button:not(:disabled):hover, .bouton:hover { transform: translateY(-1px); }
-button:not(:disabled):active, .bouton:active { transform: translateY(1px) scale(.98); }
-a.stat:hover { transform: translateY(-3px); box-shadow: 0 6px 14px rgba(224,127,60,.25); }
-.vol { animation: apparition .4s ease-out both; }
-.vol:hover { transform: translateY(-2px); }
-.siege:not(:disabled):hover { transform: scale(1.18); z-index: 1; }
-.compte .urgent, .urgent { animation: clignote 1s ease-in-out infinite; }
-.hero .avion-deco { display: inline-block; animation: vole-deco 4s ease-in-out infinite; }
-@keyframes vole-deco { 0%, 100% { transform: translate(0, 0) rotate(-4deg); } 50% { transform: translate(10px, -6px) rotate(4deg); } }
-tbody tr { transition: background-color .15s; } tbody tr:hover td { background: var(--orange-clair); }
-
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 }

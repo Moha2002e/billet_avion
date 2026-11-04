@@ -2,26 +2,31 @@ import { inject } from '@angular/core';
 import { CanActivateFn, Router, Routes } from '@angular/router';
 import { Auth } from './auth.service';
 import { Notifier } from './api.service';
-import { AdminDashboard } from './pages/admin/admin-dashboard';
-import { AdminPromotions } from './pages/admin/admin-promotions';
-import { AdminReservations } from './pages/admin/admin-reservations';
-import { AdminVols } from './pages/admin/admin-vols';
 import { Compte } from './pages/compte';
 import { Connexion } from './pages/connexion';
 import { Home } from './pages/home';
-import { MesVoyages } from './pages/mes-voyages';
 import { NouvelleReservation } from './pages/nouvelle-reservation';
 import { Promotions } from './pages/promotions';
-import { ReservationPage } from './pages/reservation';
 import { Resultats } from './pages/resultats';
 
-/** Page réservée aux comptes connectés : sinon on envoie vers la connexion en mémorisant la page demandée. */
+/**
+ * Garde de route : page réservée aux comptes connectés ; sinon redirection vers la connexion en mémorisant la page demandée.
+ * @param _route la route demandée (inutilisée)
+ * @param state l'état du routeur (contient l'adresse demandée)
+ * @returns true si connecté, sinon une redirection vers /connexion
+ */
 const connecte: CanActivateFn = (_route, state) => {
   if (inject(Auth).estConnecte()) return true;
   inject(Notifier).info('Connectez-vous pour continuer.');
   return inject(Router).createUrlTree(['/connexion'], { queryParams: { retour: state.url } });
 };
 
+/**
+ * Garde de route : page réservée à l'administrateur ; un client est renvoyé à l'accueil, un visiteur à la connexion.
+ * @param _route la route demandée (inutilisée)
+ * @param state l'état du routeur (contient l'adresse demandée)
+ * @returns true si administrateur, sinon une redirection
+ */
 const admin: CanActivateFn = (_route, state) => {
   const auth = inject(Auth);
   if (auth.estAdmin()) return true;
@@ -36,12 +41,12 @@ export const routes: Routes = [
   { path: 'promotions', component: Promotions, title: 'Promotions' },
   { path: 'connexion', component: Connexion, title: 'Connexion' },
   { path: 'reserver', component: NouvelleReservation, canActivate: [connecte], title: 'Réservation' },
-  { path: 'reservation/:id', component: ReservationPage, canActivate: [connecte], title: 'Ma réservation' },
-  { path: 'mes-voyages', component: MesVoyages, canActivate: [connecte], title: 'Mes voyages' },
+  { path: 'reservation/:id', loadComponent: () => import('./pages/reservation').then((m) => m.ReservationPage), canActivate: [connecte], title: 'Ma réservation' },
+  { path: 'mes-voyages', loadComponent: () => import('./pages/mes-voyages').then((m) => m.MesVoyages), canActivate: [connecte], title: 'Mes voyages' },
   { path: 'compte', component: Compte, canActivate: [connecte], title: 'Mon compte' },
-  { path: 'admin', component: AdminDashboard, canActivate: [admin], title: 'Administration' },
-  { path: 'admin/vols', component: AdminVols, canActivate: [admin], title: 'Administration - Vols' },
-  { path: 'admin/promotions', component: AdminPromotions, canActivate: [admin], title: 'Administration - Promotions' },
-  { path: 'admin/reservations', component: AdminReservations, canActivate: [admin], title: 'Administration - Réservations' },
+  { path: 'admin', loadComponent: () => import('./pages/admin/admin-dashboard').then((m) => m.AdminDashboard), canActivate: [admin], title: 'Administration' },
+  { path: 'admin/vols', loadComponent: () => import('./pages/admin/admin-vols').then((m) => m.AdminVols), canActivate: [admin], title: 'Administration - Vols' },
+  { path: 'admin/promotions', loadComponent: () => import('./pages/admin/admin-promotions').then((m) => m.AdminPromotions), canActivate: [admin], title: 'Administration - Promotions' },
+  { path: 'admin/reservations', loadComponent: () => import('./pages/admin/admin-reservations').then((m) => m.AdminReservations), canActivate: [admin], title: 'Administration - Réservations' },
   { path: '**', redirectTo: '' },
 ];

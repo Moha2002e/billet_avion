@@ -12,8 +12,24 @@ public enum Bagage {
     private final String libelle;
     private final BigDecimal prix;
 
+    /**
+     * Construit un type de bagage.
+     *
+     * @param libelle le texte affiché
+     * @param prix le prix en euros (texte décimal)
+     */
     Bagage(String libelle, String prix) { this.libelle = libelle; this.prix = new BigDecimal(prix); }
 
+    /**
+     * Renvoie le libellé affiché.
+     *
+     * @return le libellé affiché
+     */
     public String getLibelle() { return libelle; }
+    /**
+     * Renvoie le prix de base d'un billet adulte.
+     *
+     * @return le prix de base d'un billet adulte
+     */
     public BigDecimal getPrix() { return prix; }
 }

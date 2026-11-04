@@ -15,12 +15,29 @@ import java.util.stream.Collectors;
 public class DisponibiliteService {
     private final ReservationRepository reservations;
 
+    /**
+     * Construit le service avec le dépôt des réservations.
+     *
+     * @param reservations le dépôt des réservations
+     */
     public DisponibiliteService(ReservationRepository reservations) { this.reservations = reservations; }
 
+    /**
+     * Liste les passagers qui occupent un vol (confirmés, ou en attente dont le délai court encore).
+     *
+     * @param vol le vol
+     * @return les passagers occupant le vol
+     */
     public List<ReservationPassager> occupants(Vol vol) {
         return reservations.occupants(vol.getId(), LocalDateTime.now());
     }
 
+    /**
+     * Calcule le nombre de places libres d'un vol (les bébés n'occupent pas de siège).
+     *
+     * @param vol le vol
+     * @return les places restantes
+     */
     public long placesRestantes(Vol vol) {
         return vol.getCapacite() - occupants(vol).stream().filter(p -> p.getType() != TypePassager.BEBE).count();
     }

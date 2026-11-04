@@ -1,23 +1,20 @@
-@if (loader.actif()) { <div class="barre-chargement no-print" role="progressbar" aria-label="Chargement"></div> }
-<header class="entete-site no-print">
-  <a routerLink="/" class="marque"><img src="logo.svg" alt="" width="40" height="40"> <span>Billets d'avion</span></a>
-  <nav>
-    <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Vols</a>
-    <a routerLink="/promotions" routerLinkActive="active">Promotions</a>
-    @if (auth.estConnecte() && !auth.estAdmin()) { <a routerLink="/mes-voyages" routerLinkActive="active">Mes voyages</a> }
-    @if (auth.estAdmin()) { <a routerLink="/admin" routerLinkActive="active">Administration</a> }
-  </nav>
-  <div class="compte-menu">
+<p-toast position="top-center" />
+<p-confirmdialog />
+@if (loader.actif()) { <p-progressbar mode="indeterminate" [showValue]="false" class="barre-chargement no-print" /> }
+
+<p-menubar [model]="menu()" class="entete-site no-print">
+  <ng-template #start>
+    <a routerLink="/" class="marque"><img src="logo.svg" alt="" width="36" height="36"> <span>Billets d'avion</span></a>
+  </ng-template>
+  <ng-template #end>
     @if (auth.utilisateur(); as u) {
-      <a routerLink="/compte" class="utilisateur">👤 {{ u.prenom || u.nom }}</a>
-      <button class="small sec" (click)="deconnecter()">Se déconnecter</button>
+      <p-button [label]="u.prenom || u.nom" icon="pi pi-user" severity="secondary" [raised]="true" (onClick)="m.toggle($event)" />
+      <p-menu #m [model]="menuCompte" [popup]="true" />
     } @else {
-      <a routerLink="/connexion" class="bouton">Se connecter</a>
+      <p-button label="Se connecter" icon="pi pi-sign-in" severity="secondary" [raised]="true" (onClick)="seConnecter()" />
     }
-  </div>
-</header>
-@if (notifier.message(); as m) {
-  <div class="alert alert-{{ m.type }} no-print">{{ m.text }}</div>
-}
+  </ng-template>
+</p-menubar>
+
 <main><router-outlet /></main>
 <app-chat class="no-print" />

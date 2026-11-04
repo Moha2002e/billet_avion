@@ -23,6 +23,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @TestPropertySource(properties = "spring.datasource.url=jdbc:h2:mem:test;DB_CLOSE_DELAY=-1")
+/** Tests d'intégration de l'API (MockMvc, base H2 en mémoire) : accès, prix, réservations, paiement, promotions, chat, données de démonstration. */
 class BilletAvionTest {
     @Autowired MockMvc mvc;
     @Autowired ObjectMapper json;
@@ -32,44 +33,62 @@ class BilletAvionTest {
     static final String ENREGISTREE = "{\"carteEnregistree\":true}";
 
     // ---------- helpers ----------
+    /** Convertit une réponse JSON (texte) en arbre JSON pour la lire dans les tests. */
     JsonNode lire(String body) throws Exception { return json.readTree(body); }
 
+    /**
+     * Envoie une requête à l'API et vérifie le code HTTP attendu.
+     *
+     * @param req la requête
+     * @param jeton le jeton de session, ou null pour un visiteur
+     * @param body le corps JSON, ou null
+     * @param statut le code HTTP attendu
+     * @return le corps de la réponse
+     */
     String envoyer(MockHttpServletRequestBuilder req, String jeton, String body, int statut) throws Exception {
         if (body != null) req.contentType(MediaType.APPLICATION_JSON).content(body);
         if (jeton != null) req.header("Authorization", "Bearer " + jeton);
         return mvc.perform(req).andExpect(status().is(statut)).andReturn().getResponse().getContentAsString();
     }
 
+    /** Connecte l'administrateur par défaut et renvoie son jeton. */
     String admin() throws Exception {
         return lire(envoyer(post("/api/auth/login"), null, "{\"identifiant\":\"admin\",\"motDePasse\":\"admin123\"}", 200)).get("token").asText();
     }
 
+    /** Client de test : jeton de session et identifiant. */
     record Client(String jeton, long id) {}
 
+    /** Inscrit un nouveau client de test (e-mail unique) et renvoie son jeton. */
     Client client() throws Exception {
         String email = "client" + SEQ.incrementAndGet() + "@test.be";
         JsonNode r = lire(envoyer(post("/api/auth/inscription"), null, "{\"email\":\"" + email + "\",\"motDePasse\":\"motdepasse1\",\"nom\":\"Dupont\",\"prenom\":\"Jean\",\"telephone\":\"0470123456\",\"dateNaissance\":\"1990-05-10\"}", 201));
         return new Client(r.get("token").asText(), r.get("utilisateur").get("id").asLong());
     }
 
+    /** Crée un vol Bruxelles → Paris en tant qu'administrateur et renvoie son identifiant. */
     long vol(String jeton, String numero, int capacite, int prix, LocalDateTime depart) throws Exception {
         String body = "{\"compagnie\":\"AF\",\"numeroVol\":\"" + numero + "\",\"origine\":\"Bruxelles\",\"destination\":\"Paris\",\"dateDepart\":\"" + depart
                 + "\",\"dateArrivee\":\"" + depart.plusHours(1) + "\",\"capacite\":" + capacite + ",\"prix\":" + prix + "}";
         return lire(envoyer(post("/api/vols"), jeton, body, 201)).get("id").asLong();
     }
 
+    /** Crée une réservation pour un client et renvoie la réponse. */
     JsonNode reserver(Client c, long vol, int adultes, int enfants, int bebes) throws Exception {
         return lire(envoyer(post("/api/reservations"), c.jeton(), "{\"volId\":" + vol + ",\"adultes\":" + adultes + ",\"enfants\":" + enfants + ",\"bebes\":" + bebes + "}", 201));
     }
 
+    /** Construit le JSON d'identité d'un passager. */
     String identite(JsonNode p, String nom, String naissance) {
         return "{\"id\":" + p.get("id").asLong() + ",\"nom\":\"" + nom + "\",\"prenom\":\"Test\",\"dateNaissance\":\"" + naissance + "\"}";
     }
 
+    /** Compare un montant attendu à la valeur JSON, sans tenir compte des zéros finaux. */
     static void egal(String attendu, JsonNode valeur) { assertEquals(0, new BigDecimal(attendu).compareTo(valeur.decimalValue()), "attendu " + attendu + " mais " + valeur); }
 
     // ---------- règles pures ----------
     @Test
+    /** Les catégories d'âge et le calcul des prix (âge, groupe, promotion) sont corrects. */
     void categoriesEtTarifs() {
         LocalDate d = LocalDate.of(2030, 6, 1);
         assertEquals(Categorie.BEBE, Categorie.pour(LocalDate.of(2029, 1, 1), d));
@@ -83,6 +102,7 @@ class BilletAvionTest {
 
     // ---------- accès ----------
     @Test
+    /** Les routes publiques, connectées et administrateur sont bien protégées (401, 403) et l'inscription refuse les doublons. */
     void controleDesAcces() throws Exception {
         LocalDateTime dep = LocalDateTime.now().plusDays(10);
         String vol = "{\"compagnie\":\"AF\",\"numeroVol\":\"X1\",\"origine\":\"A\",\"destination\":\"B\",\"dateDepart\":\"" + dep + "\",\"dateArrivee\":\"" + dep.plusHours(1) + "\",\"capacite\":10,\"prix\":50}";
@@ -105,6 +125,7 @@ class BilletAvionTest {
 
     // ---------- recherche ----------
     @Test
+    /** La recherche est publique et filtre les vols sans assez de places. */
     void recherchePubliqueFiltrePlacesEtVilles() throws Exception {
         String a = admin();
         LocalDateTime dep = LocalDateTime.now().plusDays(20);
@@ -118,6 +139,7 @@ class BilletAvionTest {
 
     // ---------- parcours complet ----------
     @Test
+    /** Parcours complet : réservation, passagers, sièges, bagages, assurance, paiement, options ajoutées, modification (+10 %), annulation avec remboursement. */
     void parcoursCompletReservationPaiementModificationAnnulation() throws Exception {
         String a = admin();
         Client c = client();
@@ -213,6 +235,7 @@ class BilletAvionTest {
     }
 
     @Test
+    /** Sans assurance annulation, un billet annulé n'est pas remboursé. */
     void annulationSansAssuranceNEstPasRemboursee() throws Exception {
         String a = admin();
         Client c = client();
@@ -228,6 +251,7 @@ class BilletAvionTest {
 
     // ---------- enregistrement en ligne ----------
     @Test
+    /** L'enregistrement en ligne attribue un siège gratuit et produit la carte d'embarquement. */
     void enregistrementEnLigneAttribueUnSiegeGratuit() throws Exception {
         String a = admin();
         Client c = client();
@@ -246,6 +270,7 @@ class BilletAvionTest {
 
     // ---------- capacité, groupes, promotions ----------
     @Test
+    /** La remise de groupe s'applique dès 5 passagers et la capacité est respectée. */
     void capaciteEtRemiseDeGroupe() throws Exception {
         String a = admin();
         Client c = client();
@@ -258,6 +283,7 @@ class BilletAvionTest {
     }
 
     @Test
+    /** Les codes promo et les promotions automatiques s'appliquent (la meilleure est retenue). */
     void promotionsAutomatiquesEtCodes() throws Exception {
         String a = admin();
         Client c = client();
@@ -276,6 +302,7 @@ class BilletAvionTest {
     }
 
     @Test
+    /** Annuler un vol rembourse ses passagers et le rend non réservable. */
     void annulerUnVolRembourseLesReservations() throws Exception {
         String a = admin();
         Client c = client();
@@ -294,6 +321,7 @@ class BilletAvionTest {
     }
 
     @Test
+    /** Le chatbot répond aux questions courantes et reconnaît les villes comme mots entiers. */
     void chatbot() throws Exception {
         String a = admin();
         vol(a, "CH1", 20, 100, LocalDateTime.now().plusDays(9));
@@ -305,5 +333,41 @@ class BilletAvionTest {
         assertTrue(vers.contains("Bruxelles → Paris"), vers);
         assertTrue(lire(envoyer(post("/api/chat"), null, "{\"message\":\"modifier mon vol\"}", 200)).get("reponse").asText().contains("10 %"));
         envoyer(post("/api/chat"), null, "{\"message\":\" \"}", 400);
+    }
+
+    /** Le bouton « Insérer les données » : réservé à l'admin, et sans doublon même si on clique plusieurs fois. */
+    @Test
+    void donneesDeDemonstrationSansDoublons() throws Exception {
+        envoyer(post("/api/admin/donnees"), null, null, 401);
+        envoyer(post("/api/admin/donnees"), client().jeton(), null, 403);
+        String a = admin();
+
+        JsonNode premier = lire(envoyer(post("/api/admin/donnees"), a, null, 200));
+        assertEquals(24, premier.get("volsAjoutes").asInt() + premier.get("volsExistants").asInt());
+        assertEquals(5, premier.get("promotionsAjoutees").asInt() + premier.get("promotionsExistantes").asInt());
+        assertEquals(3, premier.get("clientsAjoutes").asInt() + premier.get("clientsExistants").asInt());
+        assertTrue(premier.get("reservationsAjoutees").asInt() >= 2, "des réservations de démonstration sont créées");
+
+        long vols = lire(envoyer(get("/api/vols"), null, null, 200)).size();
+        long promos = lire(envoyer(get("/api/admin/promotions"), a, null, 200)).size();
+        long reservations = lire(envoyer(get("/api/admin/reservations"), a, null, 200)).size();
+
+        JsonNode second = lire(envoyer(post("/api/admin/donnees"), a, null, 200));
+        assertEquals(0, second.get("volsAjoutes").asInt());
+        assertEquals(24, second.get("volsExistants").asInt());
+        assertEquals(0, second.get("promotionsAjoutees").asInt());
+        assertEquals(0, second.get("clientsAjoutes").asInt());
+        assertEquals(0, second.get("reservationsAjoutees").asInt());
+        // aucun doublon en base
+        assertEquals(vols, lire(envoyer(get("/api/vols"), null, null, 200)).size());
+        assertEquals(promos, lire(envoyer(get("/api/admin/promotions"), a, null, 200)).size());
+        assertEquals(reservations, lire(envoyer(get("/api/admin/reservations"), a, null, 200)).size());
+
+        // un compte de démonstration peut se connecter et voit sa réservation payée
+        JsonNode sara = lire(envoyer(post("/api/auth/login"), null, "{\"identifiant\":\"sara.benali@demo.be\",\"motDePasse\":\"demo12345\"}", 200));
+        JsonNode mes = lire(envoyer(get("/api/reservations"), sara.get("token").asText(), null, 200));
+        assertEquals(1, mes.size());
+        assertEquals("CONFIRMEE", mes.get(0).get("statut").asText());
+        assertEquals(3, mes.get(0).get("passagers").size());
     }
 }

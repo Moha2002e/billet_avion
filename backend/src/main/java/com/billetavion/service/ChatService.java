@@ -26,23 +26,61 @@ public class ChatService {
     private final PromotionService promotions;
     private final Mapper mapper;
 
+    /**
+     * Construit l'assistant avec les données dont il a besoin.
+     *
+     * @param vols le dépôt des vols
+     * @param promotions le dépôt ou service des promotions
+     * @param mapper le convertisseur en objets de réponse
+     */
     public ChatService(VolRepository vols, PromotionService promotions, Mapper mapper) {
         this.vols = vols; this.promotions = promotions; this.mapper = mapper;
     }
 
+    /**
+     * Met un texte en minuscules sans accents pour comparer des mots-clés.
+     *
+     * @param s le texte
+     * @return le texte normalisé
+     */
     static String normaliser(String s) {
         return Normalizer.normalize(s, Normalizer.Form.NFD).replaceAll("\\p{M}", "").toLowerCase(Locale.ROOT);
     }
 
+    /**
+     * Indique si le texte contient l'un des mots-clés.
+     *
+     * @param t le texte normalisé
+     * @param mots les mots-clés
+     * @return vrai si un mot-clé est présent
+     */
     private static boolean a(String t, String... mots) {
         for (String m : mots) if (t.contains(m)) return true;
         return false;
     }
 
+    /**
+     * Construit une réponse avec les suggestions habituelles.
+     *
+     * @param texte le texte de la réponse
+     * @return la réponse
+     */
     private static ChatReponse rep(String texte) { return new ChatReponse(texte, SUGGESTIONS); }
 
+    /**
+     * Formate un montant en euros.
+     *
+     * @param b le montant
+     * @return le montant suivi de « € »
+     */
     private static String eur(BigDecimal b) { return b.stripTrailingZeros().toPlainString() + " €"; }
 
+    /**
+     * Comprend la question (mots-clés français) et répond avec les vraies données du site : vols, prix, promotions, règles.
+     *
+     * @param message la question de l'utilisateur
+     * @return la réponse et des suggestions
+     */
     public ChatReponse repondre(String message) {
         String t = normaliser(message);
         List<Vol> avenir = vols.findAll().stream()
@@ -77,6 +115,13 @@ public class ChatService {
         return rep("Je n'ai pas bien compris. Je peux vous aider sur : les vols (ex. « vols de Bruxelles à Paris »), les promotions, les tarifs selon l'âge, les bagages, les sièges, l'assurance, la modification ou l'annulation.");
     }
 
+    /**
+     * Trouve les villes du site citées dans le message (mots entiers), dans l'ordre d'apparition.
+     *
+     * @param t le texte du message (normalisé)
+     * @param vols les vols à venir
+     * @return les villes citées
+     */
     private List<String> villesCitees(String t, List<Vol> vols) {
         Set<String> toutes = new LinkedHashSet<>();
         vols.forEach(v -> { toutes.add(v.getOrigine()); toutes.add(v.getDestination()); });
@@ -85,12 +130,26 @@ public class ChatService {
                 .sorted(Comparator.comparingInt(v -> position(t, v))).toList();
     }
 
+    /**
+     * Cherche une ville comme mot entier dans le texte.
+     *
+     * @param texte le texte
+     * @param ville la ville
+     * @return la position de la ville, ou -1
+     */
     private static int position(String texte, String ville) {
         java.util.regex.Matcher m = java.util.regex.Pattern
                 .compile("(?<![a-z0-9])" + java.util.regex.Pattern.quote(normaliser(ville)) + "(?![a-z0-9])").matcher(texte);
         return m.find() ? m.start() : -1;
     }
 
+    /**
+     * Liste les prochains vols correspondant aux villes citées.
+     *
+     * @param villes les villes citées
+     * @param avenir les vols à venir
+     * @return la réponse avec jusqu'à 5 vols
+     */
     private ChatReponse recherche(List<String> villes, List<Vol> avenir) {
         List<Vol> r = avenir;
         if (villes.size() >= 2) {
@@ -114,6 +173,11 @@ public class ChatService {
         return rep(sb.toString());
     }
 
+    /**
+     * Décrit les promotions en cours.
+     *
+     * @return la réponse
+     */
     private ChatReponse promos() {
         List<PromotionDto> p = promotions.enCours();
         if (p.isEmpty()) return rep("Aucune promotion en cours pour le moment.");
@@ -128,6 +192,11 @@ public class ChatService {
         return rep(sb.toString());
     }
 
+    /**
+     * Décrit les bagages et leurs prix.
+     *
+     * @return la réponse
+     */
     private ChatReponse bagages() {
         StringBuilder sb = new StringBuilder("Bagages :");
         for (Bagage b : Bagage.values()) sb.append("\n• ").append(b.getLibelle()).append(" : ").append(b.getPrix().signum() == 0 ? "gratuit" : eur(b.getPrix()));
@@ -135,6 +204,11 @@ public class ChatService {
         return rep(sb.toString());
     }
 
+    /**
+     * Décrit les catégories de sièges et leurs prix.
+     *
+     * @return la réponse
+     */
     private ChatReponse sieges() {
         StringBuilder sb = new StringBuilder("Sièges (par passager) :");
         for (ClasseSiege c : ClasseSiege.values()) sb.append("\n• ").append(c.getLibelle()).append(" : ").append(c.getPrix().signum() == 0 ? "gratuit" : eur(c.getPrix()));
@@ -142,6 +216,14 @@ public class ChatService {
         return rep(sb.toString());
     }
 
+    /**
+     * Explique les tarifs selon l'âge, avec un exemple chiffré si un vol et une catégorie sont cités.
+     *
+     * @param t le texte normalisé
+     * @param villes les villes citées
+     * @param avenir les vols à venir
+     * @return la réponse
+     */
     private ChatReponse tarifs(String t, List<String> villes, List<Vol> avenir) {
         StringBuilder sb = new StringBuilder("Tarifs selon l'âge (en % du prix du vol) :");
         for (Categorie c : Categorie.values())

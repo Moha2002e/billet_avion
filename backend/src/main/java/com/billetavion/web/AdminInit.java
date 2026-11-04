@@ -9,6 +9,16 @@ import org.springframework.stereotype.Component;
 @Component
 public class AdminInit implements ApplicationRunner {
     private final AuthService auth;
+    /**
+     * Construit l'initialiseur.
+     *
+     * @param auth le service d'authentification
+     */
     public AdminInit(AuthService auth) { this.auth = auth; }
+    /**
+     * Crée ou met à jour le compte administrateur au démarrage.
+     *
+     * @param args les arguments de démarrage (inutilisés)
+     */
     @Override public void run(ApplicationArguments args) { auth.initialiserAdmin(); }
 }

@@ -1,72 +1,85 @@
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { Card } from 'primeng/card';
+import { Tag } from 'primeng/tag';
 import { Api } from '../api.service';
 import { Promotion, Vol } from '../models';
 import { SearchForm } from '../shared/search-form';
 import { Squelette } from '../shared/spinner';
 
+/** Une liaison proposée sur l'accueil avec son vol le moins cher. */
 interface Destination { origine: string; destination: string; prix: number; promo: number; date: string; }
 
+/** Page d'accueil : barre de recherche publique, promotions, destinations à partir de, avantages. */
 @Component({
   selector: 'app-home',
-  imports: [SearchForm, RouterLink, CurrencyPipe, DatePipe, Squelette],
+  imports: [SearchForm, RouterLink, CurrencyPipe, DatePipe, Squelette, Card, Tag],
   template: `
     <section class="hero">
-      <h2>Où voulez-vous aller ? <span class="avion-deco">✈</span></h2>
+      <h1>Où voulez-vous aller ? <i class="pi pi-send avion-deco"></i></h1>
       <p>Cherchez sans compte, réservez en quelques minutes. Sièges, bagages et assurance au choix.</p>
       <app-search-form />
     </section>
 
     @if (promotions().length) {
-      <section class="card">
-        <h2>🏷 Promotions en cours</h2>
-        <div class="grid">
+      <p-card header="Promotions en cours" class="mb-4">
+        <div class="grille">
           @for (p of promotions(); track p.id) {
-            <div class="stat promo">
-              <b>-{{ p.pourcentage }} %</b>
-              <div>{{ p.description }}</div>
+            <div class="tuile">
+              <p-tag [value]="'-' + p.pourcentage + ' %'" severity="warn" icon="pi pi-tag" />
+              <strong>{{ p.description }}</strong>
               <small>{{ p.volLibelle ?? 'Tous les vols' }} · jusqu'au {{ p.dateFin | date: 'dd/MM/yyyy' }}</small>
               <small>{{ p.automatique ? 'Appliquée automatiquement' : 'Code : ' + p.code }}</small>
             </div>
           }
         </div>
-      </section>
+      </p-card>
     }
 
-    <section class="card">
-      <h2>✈ Destinations à partir de</h2>
-      <div class="grid">
+    <p-card header="Destinations à partir de" class="mb-4">
+      <div class="grille">
         @for (d of destinations(); track d.origine + d.destination) {
-          <a class="stat dest" [routerLink]="['/recherche']" [queryParams]="{ origine: d.origine, destination: d.destination }">
+          <a class="tuile lien" [routerLink]="['/recherche']" [queryParams]="{ origine: d.origine, destination: d.destination }">
             <small>{{ d.origine }} →</small>
-            <b>{{ d.destination }}</b>
-            @if (d.promo > 0) { <span class="badge ENFANT">-{{ d.promo }} %</span> }
-            <div>dès {{ d.prix | currency: 'EUR' }}</div>
+            <strong class="ville">{{ d.destination }}</strong>
+            @if (d.promo > 0) { <p-tag [value]="'-' + d.promo + ' %'" severity="warn" /> }
+            <span>dès <b>{{ d.prix | currency: 'EUR' }}</b></span>
             <small>{{ d.date | date: 'dd MMM yyyy' }}</small>
           </a>
-        } @empty { @if (chargement()) { <app-squelette [nombre]="4" [hauteur]="110" /> } @else { <p class="muted">Aucun vol programmé pour le moment.</p> } }
+        } @empty {
+          @if (chargement()) { <app-squelette [nombre]="4" [hauteur]="110" /> } @else { <p class="muted">Aucun vol programmé pour le moment.</p> }
+        }
       </div>
-    </section>
+    </p-card>
 
-    <section class="card">
-      <h2>Tout pour voyager l'esprit tranquille</h2>
-      <div class="grid avantages">
-        <div class="stat"><b>💺</b>Choisissez votre siège, avec plus de place si vous le souhaitez</div>
-        <div class="stat"><b>🧳</b>Bagages cabine ou soute, par passager</div>
-        <div class="stat"><b>🛡</b>Assurance annulation avec remboursement</div>
-        <div class="stat"><b>🔁</b>Modifiez votre vol (frais de 10 %)</div>
-        <div class="stat"><b>📲</b>Enregistrement en ligne et carte d'embarquement</div>
-        <div class="stat"><b>👨‍👩‍👧</b>Remises de groupe dès 5 passagers</div>
+    <p-card header="Tout pour voyager l'esprit tranquille">
+      <div class="grille">
+        @for (a of avantages; track a.texte) {
+          <div class="tuile"><i [class]="a.icone"></i><span>{{ a.texte }}</span></div>
+        }
       </div>
-    </section>
+    </p-card>
   `,
 })
 export class Home {
+  /** Promotions en cours. */
   protected promotions = signal<Promotion[]>([]);
+  /** Liaisons proposées (vol le moins cher de chaque liaison). */
   protected destinations = signal<Destination[]>([]);
+  /** Vrai pendant le chargement des vols. */
   protected chargement = signal(true);
+  /** Arguments de vente affichés en bas de page. */
+  protected avantages = [
+    { icone: 'pi pi-th-large', texte: 'Choisissez votre siège, avec plus de place si vous le souhaitez' },
+    { icone: 'pi pi-briefcase', texte: 'Bagages cabine ou soute, par passager' },
+    { icone: 'pi pi-shield', texte: 'Assurance annulation avec remboursement' },
+    { icone: 'pi pi-sync', texte: 'Modifiez votre vol (frais de 10 %)' },
+    { icone: 'pi pi-mobile', texte: 'Enregistrement en ligne et carte d\'embarquement avec QR code' },
+    { icone: 'pi pi-users', texte: 'Remises de groupe dès 5 passagers' },
+  ];
 
+  /** Charge les promotions et les vols disponibles. */
   constructor() {
     const api = inject(Api);
     api.promotions().subscribe((p) => this.promotions.set(p));
@@ -76,7 +89,11 @@ export class Home {
     });
   }
 
-  /** Pour chaque liaison, le vol à venir le moins cher. */
+  /**
+   * Garde, pour chaque liaison, le vol à venir le moins cher.
+   * @param vols les vols disponibles
+   * @returns au plus 8 liaisons triées par prix
+   */
   private moinsChers(vols: Vol[]): Destination[] {
     const parLiaison = new Map<string, Destination>();
     for (const v of vols.filter((x) => new Date(x.dateDepart).getTime() > Date.now())) {

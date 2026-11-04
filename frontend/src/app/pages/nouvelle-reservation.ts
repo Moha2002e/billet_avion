@@ -1,27 +1,37 @@
 import { Component, inject, input, signal } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
+import { Button } from 'primeng/button';
+import { Card } from 'primeng/card';
+import { Message } from 'primeng/message';
+import { ProgressSpinner } from 'primeng/progressspinner';
 import { Api } from '../api.service';
 
 /** Crée la réservation (gardée 15 min) avec le vol choisi, puis ouvre la page de réservation. */
 @Component({
   selector: 'app-nouvelle-reservation',
-  imports: [RouterLink],
+  imports: [Card, Button, Message, ProgressSpinner],
   template: `
-    <div class="card" style="max-width:520px;margin:30px auto;text-align:center">
+    <p-card class="carte-etroite centre">
       @if (erreur()) {
         <h2>Réservation impossible</h2>
-        <p>{{ erreur() }}</p>
-        <a routerLink="/">Retour à la recherche</a>
-      } @else { <h2>Nous gardons votre vol…</h2> }
-    </div>
+        <p-message severity="error">{{ erreur() }}</p-message>
+        <p-button label="Retour à la recherche" icon="pi pi-search" (onClick)="retour()" styleClass="mt-3" />
+      } @else {
+        <p-progress-spinner strokeWidth="5" ariaLabel="Chargement" />
+        <h2>Nous gardons votre vol…</h2>
+      }
+    </p-card>
   `,
 })
 export class NouvelleReservation {
   private api = inject(Api);
   private router = inject(Router);
+  // Paramètres d'URL (withComponentInputBinding)
   volId = input<string>(); adultes = input<string>(); enfants = input<string>(); bebes = input<string>(); codePromo = input<string>();
+  /** Message d'erreur éventuel. */
   protected erreur = signal('');
 
+  /** Crée la réservation dès l'ouverture de la page, puis redirige vers elle. */
   constructor() {
     queueMicrotask(() => {
       const volId = Number(this.volId());
@@ -33,4 +43,7 @@ export class NouvelleReservation {
       });
     });
   }
+
+  /** Revient à l'accueil pour refaire une recherche. */
+  protected retour(): void { this.router.navigateByUrl('/'); }
 }

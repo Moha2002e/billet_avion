@@ -11,6 +11,9 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Calcule les statistiques du tableau de bord de l'administrateur.
+ */
 @Service
 @Transactional
 public class StatsService {
@@ -18,10 +21,22 @@ public class StatsService {
     private final UtilisateurRepository utilisateurs;
     private final ReservationRepository reservations;
 
+    /**
+     * Construit le service.
+     *
+     * @param vols le dépôt des vols
+     * @param utilisateurs le dépôt des utilisateurs
+     * @param reservations le dépôt des réservations
+     */
     public StatsService(VolRepository vols, UtilisateurRepository utilisateurs, ReservationRepository reservations) {
         this.vols = vols; this.utilisateurs = utilisateurs; this.reservations = reservations;
     }
 
+    /**
+     * Calcule vols, clients, réservations, passagers par catégorie, chiffre d'affaires et taux de remplissage.
+     *
+     * @return les statistiques
+     */
     public StatsDto calculer() {
         List<Vol> tous = vols.findAll();
         List<Reservation> toutes = reservations.findAll();
