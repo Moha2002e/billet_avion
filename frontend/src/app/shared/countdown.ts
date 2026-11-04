@@ -15,7 +15,7 @@ import { Horloge } from './horloge';
   styles: `
     .compte { font-variant-numeric: tabular-nums; }
     .compte b { font-size: 1.15em; }
-    .urgent { color: #ff7675; }
+    .urgent { color: #c0392b; }
   `,
 })
 export class Countdown {
