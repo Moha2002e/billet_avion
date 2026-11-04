@@ -1,9 +1,9 @@
 /* Identité visuelle : orange et blanc */
 :root {
-  --orange: #ff6a00;
-  --orange-fonce: #d95a00;
-  --orange-clair: #fff1e6;
-  --orange-bord: #f6d2b8;
+  --orange: #e07f3c;
+  --orange-fonce: #c4662a;
+  --orange-clair: #fdf2e8;
+  --orange-bord: #efd5bf;
   --texte: #1f2937;
   --gris: #6b7280;
   --blanc: #ffffff;
@@ -31,7 +31,7 @@ s { text-decoration: line-through; }
 .entete-site button.sec { background: rgba(255,255,255,.22); color: #fff; border-color: rgba(255,255,255,.5); } .entete-site button.sec:hover { background: rgba(255,255,255,.35); }
 
 /* ---- éléments communs ---- */
-.card { background: var(--blanc); border: 1px solid var(--orange-bord); border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(255,106,0,.07); }
+.card { background: var(--blanc); border: 1px solid var(--orange-bord); border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(224,127,60,.07); }
 .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; }
 .stat { text-align: center; background: var(--orange-clair); border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 4px; align-items: center; }
 .stat b { display: block; font-size: 1.6rem; color: var(--orange-fonce); }
@@ -87,7 +87,7 @@ td.actions { display: flex; gap: 6px; flex-wrap: wrap; border-bottom: 0; }
 .avantages .stat b { font-size: 2rem; }
 
 .vol { display: grid; grid-template-columns: 2fr 2fr 1.4fr; gap: 14px; align-items: center; padding: 14px; background: #fff; border: 1px solid var(--orange-bord); border-radius: 12px; margin-bottom: 12px; }
-.vol:hover { box-shadow: 0 4px 14px rgba(255,106,0,.18); }
+.vol:hover { box-shadow: 0 4px 14px rgba(224,127,60,.18); }
 .horaires { display: flex; align-items: center; gap: 14px; }
 .horaires div b { display: block; font-size: 1.4rem; } .horaires small { display: block; }
 .horaires .trait { flex: 1; text-align: center; } .horaires hr { border: 0; border-top: 2px solid var(--orange); margin: 4px 0; }

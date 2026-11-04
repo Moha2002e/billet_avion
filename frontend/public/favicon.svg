@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Billets d'avion">
-  <rect width="64" height="64" rx="16" fill="#ff6a00"/>
+  <rect width="64" height="64" rx="16" fill="#e07f3c"/>
   <path d="M50 14 12 29l11 4 4 11 5-7 9 7z" fill="#ffffff"/>
-  <path d="M23 33 50 14 27 44z" fill="#ffd9bf"/>
+  <path d="M23 33 50 14 27 44z" fill="#fbe0cc"/>
 </svg>

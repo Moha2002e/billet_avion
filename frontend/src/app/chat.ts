@@ -31,15 +31,15 @@ interface Message { de: 'moi' | 'bot'; texte: string; }
   styles: `
     .chat-btn { position: fixed; right: 20px; bottom: 20px; width: 56px; height: 56px; border-radius: 50%; font-size: 1.6rem; padding: 0; z-index: 10; box-shadow: 0 4px 14px rgba(0,0,0,.3); }
     .chat { position: fixed; right: 20px; bottom: 20px; width: min(380px, calc(100vw - 40px)); height: min(520px, 80vh); display: flex; flex-direction: column;
-      background: #fff; border: 1px solid #f6d2b8; border-radius: 14px; box-shadow: 0 8px 30px rgba(0,0,0,.25); z-index: 10; overflow: hidden; }
-    header { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: #ff6a00; color: #fff; }
+      background: #fff; border: 1px solid #efd5bf; border-radius: 14px; box-shadow: 0 8px 30px rgba(0,0,0,.25); z-index: 10; overflow: hidden; }
+    header { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: #e07f3c; color: #fff; }
     header button { background: rgba(255,255,255,.25); color: #fff; border: 0; }
     .msgs { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
     .msg { max-width: 85%; padding: 8px 12px; border-radius: 12px; white-space: pre-line; font-size: .92rem; }
-    .bot { background: #fff1e6; color: #1f2937; align-self: flex-start; }
-    .moi { background: #ff6a00; color: #fff; align-self: flex-end; }
+    .bot { background: #fdf2e8; color: #1f2937; align-self: flex-start; }
+    .moi { background: #e07f3c; color: #fff; align-self: flex-end; }
     .sugg { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 12px 8px; }
-    form { display: flex; gap: 6px; padding: 10px; border-top: 1px solid #f6d2b8; }
+    form { display: flex; gap: 6px; padding: 10px; border-top: 1px solid #efd5bf; }
     form input { flex: 1; min-width: 0; }
   `,
 })
