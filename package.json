@@ -1,8 +1,0 @@
-{
-  "name": "billet-avion",
-  "version": "1.0.0",
-  "description": "Gestion de Billets d'Avion (Node.js, sans dépendance)",
-  "main": "server.js",
-  "scripts": { "start": "node server.js" },
-  "engines": { "node": ">=22.5" }
-}
