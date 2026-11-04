@@ -12,8 +12,11 @@ import java.util.List;
 @Component
 public class Mapper {
     private final ReservationRepository reservations;
+    private final PromotionService promotions;
 
-    public Mapper(ReservationRepository reservations) { this.reservations = reservations; }
+    public Mapper(ReservationRepository reservations, PromotionService promotions) {
+        this.reservations = reservations; this.promotions = promotions;
+    }
 
     public long placesRestantes(Vol v) {
         return v.getCapacite() - reservations.countByVolIdAndStatut(v.getId(), StatutReservation.CONFIRMEE);
@@ -24,8 +27,10 @@ public class Mapper {
     }
 
     public VolDto vol(Vol v) {
+        int promo = promotions.promoAutomatique(v);
         return new VolDto(v.getId(), v.getCompagnie(), v.getNumeroVol(), v.getOrigine(), v.getDestination(),
-                v.getDateDepart(), v.getDateArrivee(), v.getCapacite(), v.getPrix(), v.getStatut(), placesRestantes(v));
+                v.getDateDepart(), v.getDateArrivee(), v.getCapacite(), v.getPrix(), v.getStatut(), placesRestantes(v),
+                promo, Tarif.prix(v.getPrix(), Categorie.ADULTE, 0, promo));
     }
 
     public PassagerDto passager(Passager p) {
@@ -40,7 +45,7 @@ public class Mapper {
         return new ReservationDto(r.getId(), r.getVol().getId(), libelle(r.getVol()), r.getVol().getDateDepart(),
                 r.getPassager().getId(), r.getPassager().getNom() + " " + r.getPassager().getPrenom(),
                 r.getCategorie(), g == null ? null : g.getId(), g == null ? null : g.getNom(),
-                r.getPrix(), r.getStatut(), r.getDateReservation());
+                r.getPrix(), r.getCodePromo(), r.getRemisePromo(), r.getStatut(), r.getDateReservation());
     }
 
     public GroupeDto groupe(GroupeVoyage g) {

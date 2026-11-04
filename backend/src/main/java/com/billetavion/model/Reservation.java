@@ -19,6 +19,9 @@ public class Reservation {
     private Categorie categorie;
     @Column(precision = 10, scale = 2)
     private BigDecimal prix;
+    /** Promotion appliquée (code et pourcentage), le cas échéant. */
+    private String codePromo;
+    private Integer remisePromo;
     @Enumerated(EnumType.STRING)
     private StatutReservation statut = StatutReservation.CONFIRMEE;
     private LocalDateTime dateReservation = LocalDateTime.now();
@@ -34,6 +37,10 @@ public class Reservation {
     public void setCategorie(Categorie v) { this.categorie = v; }
     public BigDecimal getPrix() { return prix; }
     public void setPrix(BigDecimal v) { this.prix = v; }
+    public String getCodePromo() { return codePromo; }
+    public void setCodePromo(String v) { this.codePromo = v; }
+    public int getRemisePromo() { return remisePromo == null ? 0 : remisePromo; }
+    public void setRemisePromo(int v) { this.remisePromo = v; }
     public StatutReservation getStatut() { return statut; }
     public void setStatut(StatutReservation v) { this.statut = v; }
     public LocalDateTime getDateReservation() { return dateReservation; }

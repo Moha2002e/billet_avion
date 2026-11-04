@@ -1,6 +1,6 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject, signal } from '@angular/core';
-import { Groupe, Passager, PassagerRequest, Reservation, Stats, Vol, VolRequest } from './models';
+import { ChatReponse, Groupe, Passager, PassagerRequest, Promotion, PromotionRequest, Reservation, Stats, Vol, VolRequest } from './models';
 
 /** Message affiché en haut de page (succès ou erreur). */
 @Injectable({ providedIn: 'root' })
@@ -50,14 +50,27 @@ export class Api {
   reservations(f: { statut?: string; volId?: number; passagerId?: number } = {}) {
     return this.http.get<Reservation[]>('/api/reservations', { params: params(f) });
   }
-  reserver(passagerId: number, volId: number) { return this.http.post<Reservation>('/api/reservations', { passagerId, volId }); }
+  reserver(passagerId: number, volId: number, codePromo?: string) {
+    return this.http.post<Reservation>('/api/reservations', { passagerId, volId, codePromo: codePromo || null });
+  }
   annulerReservation(id: number) { return this.http.post<Reservation>(`/api/reservations/${id}/annuler`, {}); }
 
   groupes() { return this.http.get<Groupe[]>('/api/groupes'); }
-  creerGroupe(g: { nom: string; responsable: string; volId: number; passagerIds: number[] }) {
+  creerGroupe(g: { nom: string; responsable: string; volId: number; passagerIds: number[]; codePromo?: string | null }) {
     return this.http.post<Groupe>('/api/groupes', g);
   }
   ajouterAuGroupe(id: number, passagerIds: number[]) { return this.http.post<Groupe>(`/api/groupes/${id}/passagers`, { passagerIds }); }
   retirerDuGroupe(id: number, passagerId: number) { return this.http.delete<Groupe>(`/api/groupes/${id}/passagers/${passagerId}`); }
   annulerGroupe(id: number) { return this.http.post<Groupe>(`/api/groupes/${id}/annuler`, {}); }
+
+  promotions() { return this.http.get<Promotion[]>('/api/promotions'); }
+  toutesPromotions() { return this.http.get<Promotion[]>('/api/admin/promotions'); }
+  verifierCode(code: string, volId: number) {
+    return this.http.get<{ code: string; pourcentage: number; description: string }>('/api/promotions/verifier', { params: params({ code, volId }) });
+  }
+  creerPromotion(p: PromotionRequest) { return this.http.post<Promotion>('/api/promotions', p); }
+  modifierPromotion(id: number, p: PromotionRequest) { return this.http.put<Promotion>(`/api/promotions/${id}`, p); }
+  supprimerPromotion(id: number) { return this.http.delete<void>(`/api/promotions/${id}`); }
+
+  chat(message: string) { return this.http.post<ChatReponse>('/api/chat', { message }); }
 }

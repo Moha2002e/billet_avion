@@ -2,11 +2,14 @@
 <nav>
   <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Tableau de bord</a>
   <a routerLink="/vols" routerLinkActive="active">Vols</a>
+  <a routerLink="/promotions" routerLinkActive="active">Promotions</a>
   <a routerLink="/passagers" routerLinkActive="active">Passagers</a>
   <a routerLink="/reservations" routerLinkActive="active">Réservations</a>
   <a routerLink="/groupes" routerLinkActive="active">Voyages groupés</a>
+  <a routerLink="/admin" routerLinkActive="active">{{ auth.estAdmin() ? '🔓 Admin' : '🔒 Admin' }}</a>
 </nav>
 @if (notifier.message(); as m) {
   <div class="alert alert-{{ m.type }}">{{ m.text }}</div>
 }
 <main><router-outlet /></main>
+<app-chat />

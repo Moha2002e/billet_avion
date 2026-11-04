@@ -15,9 +15,11 @@ public class ReservationService {
     private final VolService volService;
     private final PassagerService passagerService;
     private final Mapper mapper;
+    private final PromotionService promotions;
 
     public ReservationService(ReservationRepository reservations, VolService volService,
-                              PassagerService passagerService, Mapper mapper) {
+                              PassagerService passagerService, Mapper mapper, PromotionService promotions) {
+        this.promotions = promotions;
         this.reservations = reservations; this.volService = volService;
         this.passagerService = passagerService; this.mapper = mapper;
     }
@@ -35,7 +37,7 @@ public class ReservationService {
         Vol vol = volService.trouver(req.volId());
         Passager p = passagerService.trouver(req.passagerId());
         verifierVolReservable(vol, 1);
-        return mapper.reservation(ajouter(vol, p, null));
+        return mapper.reservation(ajouter(vol, p, null, promotions.remisePour(vol, req.codePromo())));
     }
 
     public ReservationDto annuler(Long id) {
@@ -56,13 +58,14 @@ public class ReservationService {
             throw new Errors.Business("Pas assez de places : " + mapper.placesRestantes(vol) + " restante(s)");
     }
 
-    Reservation ajouter(Vol vol, Passager p, GroupeVoyage groupe) {
+    Reservation ajouter(Vol vol, Passager p, GroupeVoyage groupe, PromotionService.Remise remise) {
         if (reservations.existsByVolIdAndPassagerIdAndStatut(vol.getId(), p.getId(), StatutReservation.CONFIRMEE))
             throw new Errors.Business(p.getPrenom() + " " + p.getNom() + " est déjà réservé(e) sur ce vol");
         Reservation r = new Reservation();
         r.setVol(vol); r.setPassager(p); r.setGroupe(groupe);
         r.setCategorie(Categorie.pour(p.getDateNaissance(), vol.getDateDepart().toLocalDate()));
-        r.setPrix(Tarif.prix(vol.getPrix(), r.getCategorie(), 0));
+        r.setCodePromo(remise.code()); r.setRemisePromo(remise.pourcentage());
+        r.setPrix(Tarif.prix(vol.getPrix(), r.getCategorie(), 0, remise.pourcentage()));
         return reservations.save(r);
     }
 
@@ -70,6 +73,6 @@ public class ReservationService {
     void recalculerGroupe(GroupeVoyage g) {
         List<Reservation> membres = reservations.findByGroupeIdAndStatut(g.getId(), StatutReservation.CONFIRMEE);
         int remise = Tarif.remiseGroupePourcent(membres.size());
-        membres.forEach(r -> r.setPrix(Tarif.prix(r.getVol().getPrix(), r.getCategorie(), remise)));
+        membres.forEach(r -> r.setPrix(Tarif.prix(r.getVol().getPrix(), r.getCategorie(), remise, r.getRemisePromo())));
     }
 }

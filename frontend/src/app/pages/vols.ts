@@ -1,7 +1,9 @@
 import { DatePipe } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { Api, Notifier } from '../api.service';
+import { Auth } from '../auth.service';
 import { CATEGORIES, Reservation, Vol, VolRequest } from '../models';
 
 const vide = (): VolRequest => ({
@@ -10,8 +12,9 @@ const vide = (): VolRequest => ({
 
 @Component({
   selector: 'app-vols',
-  imports: [FormsModule, DatePipe],
+  imports: [FormsModule, DatePipe, RouterLink],
   template: `
+    @if (auth.estAdmin()) {
     <div class="card">
       <h2>{{ editId() ? 'Modifier le vol' : 'Ajouter un vol' }}</h2>
       <form class="row" (ngSubmit)="enregistrer()">
@@ -27,6 +30,9 @@ const vide = (): VolRequest => ({
         @if (editId()) { <button type="button" class="sec" (click)="reset()">Annuler</button> }
       </form>
     </div>
+    } @else {
+      <div class="card muted">Seul l'administrateur peut ajouter ou modifier des vols. <a routerLink="/admin" style="text-decoration:underline">Se connecter</a></div>
+    }
 
     <div class="card">
       <h2>Vols</h2>
@@ -45,14 +51,16 @@ const vide = (): VolRequest => ({
               <td>{{ v.origine }} → {{ v.destination }}</td>
               <td>{{ v.dateDepart | date: 'dd/MM/yy HH:mm' }}</td>
               <td>{{ v.dateArrivee | date: 'dd/MM/yy HH:mm' }}</td>
-              <td>{{ v.prix }} €</td>
+              <td>@if (v.promoPourcent > 0) { <s class="muted">{{ v.prix }} €</s> <b>{{ v.prixPromo }} €</b> <span class="badge ENFANT">-{{ v.promoPourcent }} %</span> } @else { {{ v.prix }} € }</td>
               <td>{{ v.placesRestantes }} / {{ v.capacite }}</td>
               <td><span class="badge {{ v.statut }}">{{ v.statut === 'ANNULE' ? 'Annulé' : 'Programmé' }}</span></td>
               <td class="actions">
                 <button class="small sec" (click)="voirPassagers(v)">Passagers</button>
-                <button class="small sec" (click)="editer(v)">Modifier</button>
-                @if (v.statut === 'PROGRAMME') { <button class="small danger" (click)="annuler(v)">Annuler le vol</button> }
-                <button class="small danger" (click)="supprimer(v)">Supprimer</button>
+                @if (auth.estAdmin()) {
+                  <button class="small sec" (click)="editer(v)">Modifier</button>
+                  @if (v.statut === 'PROGRAMME') { <button class="small danger" (click)="annuler(v)">Annuler le vol</button> }
+                  <button class="small danger" (click)="supprimer(v)">Supprimer</button>
+                }
               </td>
             </tr>
           } @empty { <tr><td colspan="8">Aucun vol trouvé.</td></tr> }
@@ -87,6 +95,7 @@ const vide = (): VolRequest => ({
 export class Vols {
   private api = inject(Api);
   private notifier = inject(Notifier);
+  protected auth = inject(Auth);
   protected vols = signal<Vol[]>([]);
   protected manifeste = signal<Reservation[]>([]);
   protected manifesteVol = signal<Vol | null>(null);

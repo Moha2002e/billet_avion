@@ -13,6 +13,7 @@ import { Groupe, Passager, Vol } from '../models';
         <div class="filters">
           <label>Nom du groupe<input name="n" [(ngModel)]="nom" required></label>
           <label>Responsable<input name="r" [(ngModel)]="responsable" required></label>
+          <label>Code promo (facultatif)<input name="cp" [(ngModel)]="codePromo"></label>
           <label>Vol
             <select name="v" [(ngModel)]="volId" required>
               @for (v of vols(); track v.id) { <option [ngValue]="v.id">{{ v.compagnie }} {{ v.numeroVol }} : {{ v.origine }} → {{ v.destination }} ({{ v.placesRestantes }} places)</option> }
@@ -66,6 +67,7 @@ export class Groupes {
   protected vols = signal<Vol[]>([]);
   protected nom = '';
   protected responsable = '';
+  protected codePromo = '';
   protected volId: number | null = null;
   protected choisis = new Set<number>();
   private ajouts = new Map<number, Set<number>>();
@@ -89,10 +91,10 @@ export class Groupes {
 
   creer() {
     if (this.volId === null) return;
-    this.api.creerGroupe({ nom: this.nom, responsable: this.responsable, volId: this.volId, passagerIds: [...this.choisis] })
+    this.api.creerGroupe({ nom: this.nom, responsable: this.responsable, volId: this.volId, passagerIds: [...this.choisis], codePromo: this.codePromo.trim() || null })
       .subscribe((g) => {
         this.notifier.ok(`Groupe créé : ${g.nbPassagers} passagers, remise ${g.remisePourcent} %`);
-        this.nom = ''; this.responsable = ''; this.choisis = new Set(); this.recharger();
+        this.nom = ''; this.responsable = ''; this.codePromo = ''; this.choisis = new Set(); this.recharger();
       });
   }
 

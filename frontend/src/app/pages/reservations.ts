@@ -24,9 +24,10 @@ import { Passager, Reservation, Vol } from '../models';
             }
           </select>
         </label>
+        <label>Code promo (facultatif)<input name="cp" [(ngModel)]="codePromo" placeholder="ex. ETE20"></label>
         <button type="submit">Réserver</button>
       </form>
-      <p class="muted">Le prix est calculé automatiquement selon l'âge du passager à la date du vol.</p>
+      <p class="muted">Le prix est calculé automatiquement selon l'âge du passager à la date du vol. Les promotions automatiques s'appliquent seules ; un code promo valide s'applique s'il est plus avantageux.</p>
     </div>
 
     <div class="card">
@@ -46,7 +47,7 @@ import { Passager, Reservation, Vol } from '../models';
               <td>{{ r.passagerNom }}</td><td>{{ r.volLibelle }}</td>
               <td>{{ r.dateDepart | date: 'dd/MM/yy HH:mm' }}</td>
               <td><span class="badge {{ r.categorie }}">{{ r.categorie }}</span></td>
-              <td>{{ r.prix }} €</td><td>{{ r.groupeNom ?? '—' }}</td>
+              <td>{{ r.prix }} €@if (r.remisePromo > 0) { <span class="badge ENFANT">promo -{{ r.remisePromo }} %</span> }</td><td>{{ r.groupeNom ?? '—' }}</td>
               <td>{{ r.dateReservation | date: 'dd/MM/yy HH:mm' }}</td>
               <td><span class="badge {{ r.statut }}">{{ r.statut === 'ANNULEE' ? 'Annulée' : 'Confirmée' }}</span></td>
               <td>@if (r.statut === 'CONFIRMEE') { <button class="small danger" (click)="annuler(r)">Annuler</button> }</td>
@@ -65,6 +66,7 @@ export class Reservations {
   protected vols = signal<Vol[]>([]);
   protected passagerId: number | null = null;
   protected volId: number | null = null;
+  protected codePromo = '';
   protected statut = 'CONFIRMEE';
 
   constructor() {
@@ -79,7 +81,8 @@ export class Reservations {
 
   reserver() {
     if (this.passagerId === null || this.volId === null) return;
-    this.api.reserver(this.passagerId, this.volId).subscribe((r) => {
+    this.api.reserver(this.passagerId, this.volId, this.codePromo.trim()).subscribe((r) => {
+      this.codePromo = '';
       this.notifier.ok(`Réservation ajoutée : ${r.prix} € (${r.categorie})`);
       this.charger(); this.rechargerVols();
     });

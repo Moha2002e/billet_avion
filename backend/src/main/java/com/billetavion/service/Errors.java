@@ -11,4 +11,8 @@ public final class Errors {
     public static class Business extends RuntimeException {
         public Business(String message) { super(message); }
     }
+
+    public static class Unauthorized extends RuntimeException {
+        public Unauthorized(String message) { super(message); }
+    }
 }

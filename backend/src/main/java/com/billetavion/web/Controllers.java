@@ -3,6 +3,7 @@ package com.billetavion.web;
 import com.billetavion.model.Categorie;
 import com.billetavion.model.StatutReservation;
 import com.billetavion.service.*;
+import jakarta.servlet.http.HttpServletRequest;
 import com.billetavion.web.Dtos.*;
 import jakarta.validation.Valid;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -101,5 +102,51 @@ public final class Controllers {
         private final StatsService service;
         public StatsController(StatsService service) { this.service = service; }
         @GetMapping public StatsDto stats() { return service.calculer(); }
+    }
+
+    @RestController @RequestMapping("/api/promotions")
+    public static class PromotionController {
+        private final PromotionService service;
+        public PromotionController(PromotionService service) { this.service = service; }
+
+        /** Public : promotions en cours. */
+        @GetMapping public List<PromotionDto> enCours() { return service.enCours(); }
+        @GetMapping("/verifier")
+        public RemiseDto verifier(@RequestParam String code, @RequestParam Long volId) { return service.verifier(code, volId); }
+        @PostMapping @ResponseStatus(HttpStatus.CREATED)
+        public PromotionDto creer(@Valid @RequestBody PromotionRequest r) { return service.creer(r); }
+        @PutMapping("/{id}") public PromotionDto modifier(@PathVariable Long id, @Valid @RequestBody PromotionRequest r) { return service.modifier(id, r); }
+        @DeleteMapping("/{id}") @ResponseStatus(HttpStatus.NO_CONTENT)
+        public void supprimer(@PathVariable Long id) { service.supprimer(id); }
+    }
+
+    @RestController @RequestMapping("/api/admin")
+    public static class AdminController {
+        private final PromotionService promotions;
+        public AdminController(PromotionService promotions) { this.promotions = promotions; }
+        /** Admin : toutes les promotions, y compris expirées ou désactivées. */
+        @GetMapping("/promotions") public List<PromotionDto> toutes() { return promotions.toutes(); }
+    }
+
+    @RestController @RequestMapping("/api/auth")
+    public static class AuthController {
+        private final AuthService auth;
+        public AuthController(AuthService auth) { this.auth = auth; }
+
+        @PostMapping("/login")
+        public Map<String, String> login(@Valid @RequestBody LoginRequest r) {
+            return Map.of("token", auth.connecter(r.username(), r.password()), "username", auth.username());
+        }
+        @PostMapping("/logout")
+        public void logout(HttpServletRequest req) { auth.deconnecter(AdminInterceptor.jeton(req)); }
+        /** Protégé par l'intercepteur : sert à vérifier qu'un jeton est toujours valide. */
+        @GetMapping("/me") public Map<String, String> me() { return Map.of("username", auth.username()); }
+    }
+
+    @RestController @RequestMapping("/api/chat")
+    public static class ChatController {
+        private final ChatService service;
+        public ChatController(ChatService service) { this.service = service; }
+        @PostMapping public ChatReponse chat(@Valid @RequestBody ChatRequest r) { return service.repondre(r.message()); }
     }
 }

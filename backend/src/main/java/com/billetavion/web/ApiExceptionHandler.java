@@ -15,6 +15,11 @@ public class ApiExceptionHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", e.getMessage()));
     }
 
+    @ExceptionHandler(Errors.Unauthorized.class)
+    ResponseEntity<Map<String, String>> unauthorized(Errors.Unauthorized e) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", e.getMessage()));
+    }
+
     @ExceptionHandler(Errors.Business.class)
     ResponseEntity<Map<String, String>> business(Errors.Business e) {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("message", e.getMessage()));

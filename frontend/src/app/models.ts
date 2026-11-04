@@ -11,9 +11,9 @@ export const CATEGORIES: { code: Categorie; libelle: string }[] = [
 export interface Vol {
   id: number; compagnie: string; numeroVol: string; origine: string; destination: string;
   dateDepart: string; dateArrivee: string; capacite: number; prix: number;
-  statut: 'PROGRAMME' | 'ANNULE'; placesRestantes: number;
+  statut: 'PROGRAMME' | 'ANNULE'; placesRestantes: number; promoPourcent: number; prixPromo: number;
 }
-export type VolRequest = Omit<Vol, 'id' | 'statut' | 'placesRestantes'>;
+export type VolRequest = Omit<Vol, 'id' | 'statut' | 'placesRestantes' | 'promoPourcent' | 'prixPromo'>;
 
 export interface Passager {
   id: number; nom: string; prenom: string; dateNaissance: string; age: number;
@@ -24,7 +24,7 @@ export type PassagerRequest = Pick<Passager, 'nom' | 'prenom' | 'dateNaissance' 
 export interface Reservation {
   id: number; volId: number; volLibelle: string; dateDepart: string;
   passagerId: number; passagerNom: string; categorie: Categorie;
-  groupeId: number | null; groupeNom: string | null; prix: number;
+  groupeId: number | null; groupeNom: string | null; prix: number; codePromo: string | null; remisePromo: number;
   statut: 'CONFIRMEE' | 'ANNULEE'; dateReservation: string;
 }
 
@@ -38,3 +38,11 @@ export interface Stats {
   passagersParCategorie: Record<Categorie, number>;
   reservationsActives: number; groupesActifs: number; revenuTotal: number; tauxRemplissagePourcent: number;
 }
+
+export interface Promotion {
+  id: number; code: string; description: string; pourcentage: number; dateDebut: string; dateFin: string;
+  automatique: boolean; volId: number | null; volLibelle: string | null; actif: boolean; enCours: boolean;
+}
+export type PromotionRequest = Omit<Promotion, 'id' | 'volLibelle' | 'enCours'>;
+
+export interface ChatReponse { reponse: string; suggestions: string[]; }

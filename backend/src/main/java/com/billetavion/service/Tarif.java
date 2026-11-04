@@ -16,9 +16,15 @@ public final class Tarif {
         return 0;
     }
 
-    public static BigDecimal prix(BigDecimal prixVol, Categorie categorie, int remisePourcent) {
+    public static BigDecimal prix(BigDecimal prixVol, Categorie categorie, int remiseGroupePourcent) {
+        return prix(prixVol, categorie, remiseGroupePourcent, 0);
+    }
+
+    /** Prix = prix du vol x coefficient d'âge x (1 - remise de groupe) x (1 - remise promotionnelle). */
+    public static BigDecimal prix(BigDecimal prixVol, Categorie categorie, int remiseGroupePourcent, int remisePromoPourcent) {
         return prixVol.multiply(categorie.getCoefficient())
-                .multiply(BigDecimal.valueOf(100 - remisePourcent))
-                .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+                .multiply(BigDecimal.valueOf(100 - remiseGroupePourcent))
+                .multiply(BigDecimal.valueOf(100 - remisePromoPourcent))
+                .divide(BigDecimal.valueOf(10000), 2, RoundingMode.HALF_UP);
     }
 }

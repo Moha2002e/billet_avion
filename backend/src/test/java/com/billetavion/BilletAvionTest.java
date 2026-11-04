@@ -39,8 +39,17 @@ class BilletAvionTest {
         assertEquals(10, Tarif.remiseGroupePourcent(12));
     }
 
+    private String admin() throws Exception {
+        String json = mvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON)
+                .content("{\"username\":\"admin\",\"password\":\"admin123\"}"))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        return "Bearer " + json.replaceAll(".*\"token\":\"([a-f0-9]+)\".*", "$1");
+    }
+
     private long creer(String url, String body) throws Exception {
-        String json = mvc.perform(post(url).contentType(MediaType.APPLICATION_JSON).content(body))
+        var req = post(url).contentType(MediaType.APPLICATION_JSON).content(body);
+        if (url.startsWith("/api/vols") || url.startsWith("/api/promotions")) req.header("Authorization", admin());
+        String json = mvc.perform(req)
                 .andExpect(status().isCreated()).andReturn().getResponse().getContentAsString();
         return Long.parseLong(json.replaceAll("^\\{\"id\":(\\d+).*$", "$1"));
     }
@@ -56,7 +65,7 @@ class BilletAvionTest {
     @Test
     void scenarioComplet() throws Exception {
         long vol = creer("/api/vols", VOL);
-        mvc.perform(post("/api/vols").contentType(MediaType.APPLICATION_JSON)
+        mvc.perform(post("/api/vols").contentType(MediaType.APPLICATION_JSON).header("Authorization", admin())
                 .content(VOL.replace("\"destination\":\"CDG\"", "\"destination\":\"bru\"")))
                 .andExpect(status().isConflict());
         mvc.perform(post("/api/passagers").contentType(MediaType.APPLICATION_JSON).content(passager("A", "2000-01-01", "12")))
@@ -82,7 +91,8 @@ class BilletAvionTest {
         mvc.perform(get("/api/vols/" + vol + "/passagers?categorie=JEUNE"))
                 .andExpect(jsonPath("$.length()").value(1)).andExpect(jsonPath("$[0].passagerNom").value("Jeune P"));
         mvc.perform(get("/api/vols/" + vol)).andExpect(jsonPath("$.placesRestantes").value(0));
-        mvc.perform(delete("/api/vols/" + vol)).andExpect(status().isConflict());
+        mvc.perform(delete("/api/vols/" + vol)).andExpect(status().isUnauthorized());
+        mvc.perform(delete("/api/vols/" + vol).header("Authorization", admin())).andExpect(status().isConflict());
     }
 
     @Test
@@ -106,5 +116,54 @@ class BilletAvionTest {
                 .andExpect(jsonPath("$.total").value(400.0));
         mvc.perform(post("/api/groupes/" + groupe + "/annuler")).andExpect(jsonPath("$.actif").value(false));
         mvc.perform(get("/api/stats")).andExpect(status().isOk());
+    }
+
+    @Test
+    void adminObligatoirePourAjouterUnVol() throws Exception {
+        mvc.perform(post("/api/vols").contentType(MediaType.APPLICATION_JSON).content(VOL)).andExpect(status().isUnauthorized());
+        mvc.perform(post("/api/vols").contentType(MediaType.APPLICATION_JSON).header("Authorization", "Bearer faux").content(VOL))
+                .andExpect(status().isUnauthorized());
+        mvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON)
+                .content("{\"username\":\"admin\",\"password\":\"mauvais\"}")).andExpect(status().isUnauthorized());
+        mvc.perform(get("/api/vols")).andExpect(status().isOk());
+        mvc.perform(get("/api/admin/promotions")).andExpect(status().isUnauthorized());
+        mvc.perform(get("/api/auth/me").header("Authorization", admin())).andExpect(status().isOk());
+    }
+
+    @Test
+    void promotions() throws Exception {
+        long vol = creer("/api/vols", VOL.replace("AF1", "PR1").replace("\"capacite\":2", "\"capacite\":10"));
+        String auj = LocalDate.now().toString(), fin = LocalDate.now().plusDays(30).toString();
+        creer("/api/promotions", "{\"code\":\"ETE20\",\"description\":\"Été\",\"pourcentage\":20,\"dateDebut\":\"" + auj
+                + "\",\"dateFin\":\"" + fin + "\",\"automatique\":false,\"volId\":" + vol + ",\"actif\":true}");
+        long p = creer("/api/passagers", passager("Promo", "1980-01-01", "0470999999"));
+        long q = creer("/api/passagers", passager("Promo2", "1980-01-01", "0470999998"));
+        mvc.perform(post("/api/reservations").contentType(MediaType.APPLICATION_JSON)
+                .content("{\"passagerId\":" + p + ",\"volId\":" + vol + ",\"codePromo\":\"faux\"}")).andExpect(status().isConflict());
+        mvc.perform(post("/api/reservations").contentType(MediaType.APPLICATION_JSON)
+                .content("{\"passagerId\":" + p + ",\"volId\":" + vol + ",\"codePromo\":\"ete20\"}"))
+                .andExpect(status().isCreated()).andExpect(jsonPath("$.prix").value(80.0)).andExpect(jsonPath("$.remisePromo").value(20));
+        // promo automatique 50 % : meilleure que le code 20 %
+        creer("/api/promotions", "{\"code\":\"AUTO50\",\"description\":\"Flash\",\"pourcentage\":50,\"dateDebut\":\"" + auj
+                + "\",\"dateFin\":\"" + fin + "\",\"automatique\":true,\"volId\":" + vol + ",\"actif\":true}");
+        mvc.perform(get("/api/vols/" + vol)).andExpect(jsonPath("$.promoPourcent").value(50)).andExpect(jsonPath("$.prixPromo").value(50.0));
+        mvc.perform(post("/api/reservations").contentType(MediaType.APPLICATION_JSON)
+                .content("{\"passagerId\":" + q + ",\"volId\":" + vol + ",\"codePromo\":\"ETE20\"}"))
+                .andExpect(jsonPath("$.prix").value(50.0));
+        mvc.perform(post("/api/promotions").contentType(MediaType.APPLICATION_JSON).header("Authorization", admin()).content(
+                "{\"code\":\"ete20\",\"description\":\"x\",\"pourcentage\":5,\"dateDebut\":\"" + auj + "\",\"dateFin\":\"" + fin
+                + "\",\"automatique\":false,\"actif\":true}")).andExpect(status().isConflict());
+    }
+
+    @Test
+    void chatbot() throws Exception {
+        creer("/api/vols", VOL.replace("BRU", "Bruxelles").replace("CDG", "Madrid"));
+        String[] questions = {"Bonjour", "vols de Bruxelles à Madrid", "Quelles promotions ?", "tarif enfant", "voyage en groupe", "blabla zzz"};
+        for (String q : questions)
+            mvc.perform(post("/api/chat").contentType(MediaType.APPLICATION_JSON).content("{\"message\":\"" + q + "\"}"))
+                    .andExpect(status().isOk()).andExpect(jsonPath("$.reponse").isNotEmpty());
+        mvc.perform(post("/api/chat").contentType(MediaType.APPLICATION_JSON).content("{\"message\":\"Y a-t-il un vol vers Madrid ?\"}"))
+                .andExpect(jsonPath("$.reponse").value(org.hamcrest.Matchers.containsString("Bruxelles → Madrid")));
+        mvc.perform(post("/api/chat").contentType(MediaType.APPLICATION_JSON).content("{\"message\":\" \"}")).andExpect(status().isBadRequest());
     }
 }

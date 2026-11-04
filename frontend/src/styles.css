@@ -32,3 +32,4 @@ td.actions { white-space: nowrap; display: flex; gap: 6px; flex-wrap: wrap; }
 .checks label { flex-direction: row; align-items: center; gap: 6px; font-size: .9rem; }
 .checks input { min-width: 0; }
 .muted { opacity: .7; }
+s { text-decoration: line-through; }
