@@ -180,3 +180,8 @@ a:hover {
     background-color: #d1ecf1;
     border-color: #bee5eb;
 }
+
+/* Formulaire de suppression en ligne (liste des clients) */
+form.inline { display: inline; background: none; box-shadow: none; backdrop-filter: none; padding: 0; margin: 0; width: auto; }
+form.inline button { background: none; border: none; color: white; cursor: pointer; padding: 0; margin: 0; font: inherit; }
+form.inline button:hover { background: none; text-decoration: underline; }
