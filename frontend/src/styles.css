@@ -131,3 +131,49 @@ td.actions { display: flex; gap: 6px; flex-wrap: wrap; border-bottom: 0; }
 @media print {
   .no-print, .card:not(:has(.embarquement)), .entete { display: none !important; }
 }
+
+/* ================= Animations et chargement ================= */
+@keyframes apparition { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@keyframes tourne { to { transform: rotate(360deg); } }
+@keyframes brille { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+@keyframes barre { 0% { left: -40%; } 100% { left: 100%; } }
+@keyframes vole { 0% { left: -8%; transform: translateY(0) rotate(0); } 50% { transform: translateY(-8px) rotate(-6deg); } 100% { left: 100%; transform: translateY(0) rotate(0); } }
+@keyframes clignote { 0%, 100% { opacity: 1; } 50% { opacity: .55; } }
+@keyframes glisse { from { opacity: 0; transform: translateY(-12px); } to { opacity: 1; transform: none; } }
+
+/* Les pages apparaissent en douceur à chaque changement de route */
+main > *:not(router-outlet) { animation: apparition .35s ease-out; }
+.card { animation: apparition .35s ease-out both; }
+.alert { animation: glisse .3s ease-out; }
+
+/* Barre de progression en haut quand le serveur travaille */
+.barre-chargement { position: fixed; top: 0; left: 0; right: 0; height: 3px; z-index: 50; overflow: hidden; background: rgba(224,127,60,.2); }
+.barre-chargement::after { content: ''; position: absolute; top: 0; bottom: 0; width: 40%; background: #fff; box-shadow: 0 0 8px #c4662a; animation: barre 1s ease-in-out infinite; }
+
+/* Icône de chargement */
+.spinner { display: inline-block; width: 1em; height: 1em; border: .17em solid currentColor; border-right-color: transparent; border-radius: 50%; vertical-align: -0.15em; animation: tourne .7s linear infinite; }
+
+/* Squelettes */
+.squelette { border-radius: 12px; margin-bottom: 12px; background: linear-gradient(90deg, #f6ebe1 25%, #fdf7f1 50%, #f6ebe1 75%); background-size: 200% 100%; animation: brille 1.4s linear infinite; }
+
+/* Avion qui traverse pendant la recherche */
+.avion-chargement { text-align: center; padding: 10px 0 18px; color: var(--gris); }
+.avion-chargement .piste { position: relative; height: 38px; margin-bottom: 4px; border-bottom: 2px dashed var(--orange-bord); overflow: hidden; }
+.avion-vole { position: absolute; bottom: 2px; font-size: 1.7rem; color: var(--orange); animation: vole 2.2s ease-in-out infinite; }
+
+/* Interactions */
+button, .bouton, a.stat, .vol, .siege { transition: transform .15s ease, box-shadow .15s ease, background-color .15s ease; }
+button:not(:disabled):hover, .bouton:hover { transform: translateY(-1px); }
+button:not(:disabled):active, .bouton:active { transform: translateY(1px) scale(.98); }
+a.stat:hover { transform: translateY(-3px); box-shadow: 0 6px 14px rgba(224,127,60,.25); }
+.vol { animation: apparition .4s ease-out both; }
+.vol:hover { transform: translateY(-2px); }
+.siege:not(:disabled):hover { transform: scale(1.18); z-index: 1; }
+.compte .urgent, .urgent { animation: clignote 1s ease-in-out infinite; }
+.hero .avion-deco { display: inline-block; animation: vole-deco 4s ease-in-out infinite; }
+@keyframes vole-deco { 0%, 100% { transform: translate(0, 0) rotate(-4deg); } 50% { transform: translate(10px, -6px) rotate(4deg); } }
+tbody tr { transition: background-color .15s; } tbody tr:hover td { background: var(--orange-clair); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+}

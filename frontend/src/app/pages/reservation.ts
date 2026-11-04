@@ -10,6 +10,7 @@ import { Countdown } from '../shared/countdown';
 import { Horloge } from '../shared/horloge';
 import { PassagerSiege, SeatMap } from '../shared/seat-map';
 import { PaymentForm } from '../shared/payment-form';
+import { AvionChargement, Squelette } from '../shared/spinner';
 
 interface FormPassager { id: number; type: TypePassager; nom: string; prenom: string; dateNaissance: string; categorie: Categorie; prixBillet: number; }
 interface FormOption { id: number; siege: string | null; bagage: Bagage; prioritaire: boolean; repas: boolean; }
@@ -19,7 +20,7 @@ const TYPES: Record<TypePassager, string> = { ADULTE: 'Adulte', ENFANT: 'Enfant'
 /** Page d'une réservation : passagers, sièges, bagages, options, paiement ; puis gestion du voyage (modifier, enregistrement, annuler). */
 @Component({
   selector: 'app-reservation',
-  imports: [FormsModule, CurrencyPipe, DatePipe, RouterLink, Countdown, SeatMap, PaymentForm],
+  imports: [FormsModule, CurrencyPipe, DatePipe, RouterLink, Countdown, SeatMap, PaymentForm, AvionChargement, Squelette],
   template: `
     @if (res(); as r) {
       <div class="card entete">
@@ -239,7 +240,7 @@ const TYPES: Record<TypePassager, string> = { ADULTE: 'Adulte', ENFANT: 'Enfant'
       }
     } @else if (introuvable()) {
       <div class="card"><h2>Réservation introuvable</h2><a routerLink="/mes-voyages">Mes voyages</a></div>
-    } @else { <div class="card">Chargement…</div> }
+    } @else { <app-avion-chargement texte="Chargement de votre réservation…" /><app-squelette [nombre]="2" [hauteur]="140" /> }
   `,
 })
 export class ReservationPage {

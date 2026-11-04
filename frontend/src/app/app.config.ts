@@ -3,7 +3,8 @@ import localeFr from '@angular/common/locales/fr';
 import { HttpErrorResponse, HttpInterceptorFn, provideHttpClient, withInterceptors } from '@angular/common/http';
 import { ApplicationConfig, LOCALE_ID, inject, provideAppInitializer, provideBrowserGlobalErrorListeners } from '@angular/core';
 import { Router, provideRouter, withComponentInputBinding } from '@angular/router';
-import { catchError, throwError } from 'rxjs';
+import { catchError, finalize, throwError } from 'rxjs';
+import { Loader } from './shared/loader';
 import { Notifier } from './api.service';
 import { Auth } from './auth.service';
 import { routes } from './app.routes';
@@ -15,6 +16,9 @@ const apiInterceptor: HttpInterceptorFn = (req, next) => {
   const notifier = inject(Notifier);
   const auth = inject(Auth);
   const router = inject(Router);
+  const loader = inject(Loader);
+  const suivi = !req.url.includes('/api/chat');   // le chat a son propre indicateur
+  if (suivi) loader.debut();
   const token = auth.token();
   const requete = token ? req.clone({ setHeaders: { Authorization: `Bearer ${token}` } }) : req;
   return next(requete).pipe(
@@ -29,6 +33,7 @@ const apiInterceptor: HttpInterceptorFn = (req, next) => {
       }
       return throwError(() => e);
     }),
+    finalize(() => { if (suivi) loader.fin(); }),
   );
 };
 

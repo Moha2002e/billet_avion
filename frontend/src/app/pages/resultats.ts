@@ -5,19 +5,20 @@ import { Api, Notifier } from '../api.service';
 import { Auth } from '../auth.service';
 import { Recherche, ResultatVol } from '../models';
 import { SearchForm } from '../shared/search-form';
+import { AvionChargement, Squelette } from '../shared/spinner';
 
 @Component({
   selector: 'app-resultats',
-  imports: [SearchForm, CurrencyPipe, DatePipe],
+  imports: [SearchForm, CurrencyPipe, DatePipe, AvionChargement, Squelette],
   template: `
     <div class="card"><app-search-form [initial]="recherche()" /></div>
 
     <div class="card">
       <h2>{{ titre() }}</h2>
       @if (!auth.estConnecte()) { <p class="muted">Vous pouvez chercher librement ; la connexion n'est demandée qu'au moment de réserver (votre choix sera conservé).</p> }
-      @if (chargement()) { <p>Recherche en cours…</p> }
-      @for (r of resultats(); track r.vol.id) {
-        <article class="vol">
+      @if (chargement()) { <app-avion-chargement /><app-squelette [nombre]="3" [hauteur]="96" /> }
+      @for (r of resultats(); track r.vol.id; let i = $index) {
+        <article class="vol apparition" [style.animation-delay.ms]="i * 60">
           <div class="horaires">
             <div><b>{{ r.vol.dateDepart | date: 'HH:mm' }}</b><small>{{ r.vol.origine }}</small></div>
             <div class="trait"><small>{{ duree(r.vol.dateDepart, r.vol.dateArrivee) }}</small><hr><small>Direct</small></div>
@@ -74,7 +75,8 @@ export class Resultats {
   protected nbPassagers() { const r = this.recherche(); return (r.adultes ?? 1) + (r.enfants ?? 0) + (r.bebes ?? 0); }
   protected titre() {
     const r = this.recherche();
-    return (r.origine || 'Partout') + ' → ' + (r.destination || 'Partout') + ' · ' + this.resultats().length + ' vol(s)';
+    const trajet = (r.origine || 'Partout') + ' → ' + (r.destination || 'Partout');
+    return this.chargement() ? trajet : trajet + ' · ' + this.resultats().length + ' vol(s)';
   }
   protected duree(a: string, b: string) {
     const m = Math.round((new Date(b).getTime() - new Date(a).getTime()) / 60000);

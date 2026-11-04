@@ -2,11 +2,12 @@ import { CurrencyPipe } from '@angular/common';
 import { Component, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Carte, PaiementRequest } from '../models';
+import { Spinner } from './spinner';
 
 /** Formulaire de carte bancaire FICTIF : aucun paiement réel, seule la validité du format est contrôlée. */
 @Component({
   selector: 'app-payment-form',
-  imports: [FormsModule, CurrencyPipe],
+  imports: [FormsModule, CurrencyPipe, Spinner],
   template: `
     <form (ngSubmit)="valider()" class="paiement">
       @if (carteEnregistree(); as c) {
@@ -25,7 +26,7 @@ import { Carte, PaiementRequest } from '../models';
       }
       <p class="muted">🔒 Paiement fictif de démonstration : aucun débit réel, aucune banque contactée. Le numéro complet et le CVV ne sont jamais conservés.
         Carte de test acceptée : 4242 4242 4242 4242 · refusée : 4000 0000 0000 0002 (date future, CVV au choix).</p>
-      <button type="submit" [disabled]="occupe()">{{ occupe() ? 'Paiement en cours…' : libelle() }} @if (montant() !== null) { — {{ montant() | currency: 'EUR' }} }</button>
+      <button type="submit" [disabled]="occupe()">@if (occupe()) { <app-spinner /> Paiement en cours… } @else { {{ libelle() }} } @if (montant() !== null) { — {{ montant() | currency: 'EUR' }} }</button>
     </form>
   `,
 })

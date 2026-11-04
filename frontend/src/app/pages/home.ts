@@ -4,15 +4,16 @@ import { RouterLink } from '@angular/router';
 import { Api } from '../api.service';
 import { Promotion, Vol } from '../models';
 import { SearchForm } from '../shared/search-form';
+import { Squelette } from '../shared/spinner';
 
 interface Destination { origine: string; destination: string; prix: number; promo: number; date: string; }
 
 @Component({
   selector: 'app-home',
-  imports: [SearchForm, RouterLink, CurrencyPipe, DatePipe],
+  imports: [SearchForm, RouterLink, CurrencyPipe, DatePipe, Squelette],
   template: `
     <section class="hero">
-      <h2>Où voulez-vous aller ?</h2>
+      <h2>Où voulez-vous aller ? <span class="avion-deco">✈</span></h2>
       <p>Cherchez sans compte, réservez en quelques minutes. Sièges, bagages et assurance au choix.</p>
       <app-search-form />
     </section>
@@ -44,7 +45,7 @@ interface Destination { origine: string; destination: string; prix: number; prom
             <div>dès {{ d.prix | currency: 'EUR' }}</div>
             <small>{{ d.date | date: 'dd MMM yyyy' }}</small>
           </a>
-        } @empty { <p class="muted">Aucun vol programmé pour le moment.</p> }
+        } @empty { @if (chargement()) { <app-squelette [nombre]="4" [hauteur]="110" /> } @else { <p class="muted">Aucun vol programmé pour le moment.</p> } }
       </div>
     </section>
 
@@ -64,11 +65,15 @@ interface Destination { origine: string; destination: string; prix: number; prom
 export class Home {
   protected promotions = signal<Promotion[]>([]);
   protected destinations = signal<Destination[]>([]);
+  protected chargement = signal(true);
 
   constructor() {
     const api = inject(Api);
     api.promotions().subscribe((p) => this.promotions.set(p));
-    api.vols({ disponibles: true }).subscribe((vols) => this.destinations.set(this.moinsChers(vols)));
+    api.vols({ disponibles: true }).subscribe({
+      next: (vols) => { this.destinations.set(this.moinsChers(vols)); this.chargement.set(false); },
+      error: () => this.chargement.set(false),
+    });
   }
 
   /** Pour chaque liaison, le vol à venir le moins cher. */

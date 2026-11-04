@@ -3,6 +3,7 @@ import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/rou
 import { Notifier } from './api.service';
 import { Auth } from './auth.service';
 import { Chat } from './chat';
+import { Loader } from './shared/loader';
 
 @Component({
   selector: 'app-root',
@@ -12,6 +13,7 @@ import { Chat } from './chat';
 export class App {
   protected notifier = inject(Notifier);
   protected auth = inject(Auth);
+  protected loader = inject(Loader);
   private router = inject(Router);
 
   protected deconnecter() {

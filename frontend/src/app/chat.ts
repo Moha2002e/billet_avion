@@ -14,7 +14,7 @@ interface Message { de: 'moi' | 'bot'; texte: string; }
         <header><b>🤖 Assistant voyage</b><button class="small sec" (click)="ouvert.set(false)" aria-label="Fermer">✕</button></header>
         <div class="msgs" #liste>
           @for (m of messages(); track $index) { <div class="msg {{ m.de }}">{{ m.texte }}</div> }
-          @if (attente()) { <div class="msg bot">…</div> }
+          @if (attente()) { <div class="msg bot ecrit"><span></span><span></span><span></span></div> }
         </div>
         <div class="sugg">
           @for (s of suggestions(); track s) { <button class="small sec" (click)="envoyer(s)">{{ s }}</button> }
@@ -41,6 +41,17 @@ interface Message { de: 'moi' | 'bot'; texte: string; }
     .sugg { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 12px 8px; }
     form { display: flex; gap: 6px; padding: 10px; border-top: 1px solid #efd5bf; }
     form input { flex: 1; min-width: 0; }
+    .msg { animation: apparition .25s ease-out; }
+    .chat { animation: ouverture .25s ease-out; transform-origin: bottom right; }
+    .chat-btn { animation: pulsation 2.4s ease-in-out infinite; }
+    .ecrit { display: flex; gap: 4px; padding: 12px; }
+    .ecrit span { width: 7px; height: 7px; border-radius: 50%; background: #c4662a; animation: rebond 1s infinite ease-in-out; }
+    .ecrit span:nth-child(2) { animation-delay: .15s; } .ecrit span:nth-child(3) { animation-delay: .3s; }
+    @keyframes apparition { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+    @keyframes ouverture { from { opacity: 0; transform: scale(.9); } to { opacity: 1; transform: none; } }
+    @keyframes pulsation { 0%, 100% { box-shadow: 0 4px 14px rgba(0,0,0,.3); } 50% { box-shadow: 0 4px 14px rgba(0,0,0,.3), 0 0 0 10px rgba(224,127,60,.25); } }
+    @keyframes rebond { 0%, 80%, 100% { transform: translateY(0); opacity: .5; } 40% { transform: translateY(-6px); opacity: 1; } }
+    @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
   `,
 })
 export class Chat {
